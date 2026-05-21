@@ -154,8 +154,8 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Test budget limit persistence and retrieval
     - _Requirements: 2.2, 2.3, 14.2_
 
-- [ ] 5. Routine & Relay module
-  - [ ] 5.1 Implement Tasks API
+- [x] 5. Routine & Relay module
+  - [x] 5.1 Implement Tasks API
     - Implement `api/app/routers/tasks.py` and `api/app/services/task_service.py`
     - `GET /api/v1/tasks`: list tasks for today (or `?date=`), requires auth
     - `POST /api/v1/tasks`: validate title non-empty; return HTTP 422 on empty title
@@ -164,19 +164,19 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - `PATCH /api/v1/tasks/reorder`: bulk update `sort_order` for drag-and-drop persistence
     - _Requirements: 3.4, 3.5, 3.9, 3.10, 7.1, 7.2_
 
-  - [ ] 5.2 Implement Rollover_Job
+  - [x] 5.2 Implement Rollover_Job
     - Implement `api/app/jobs/rollover_job.py`: query all tasks with `state = 'pending'` and `date < today`; bulk-update to `state = 'delayed'`; insert new `pending` copies for today; log errors with timestamp on failure
     - Register job in `main.py` lifespan with APScheduler cron at `hour=0, minute=0`
     - _Requirements: 3.7, 3.8_
 
-  - [ ] 5.3 Implement task state machine hook and RoutineRelayCard
+  - [x] 5.3 Implement task state machine hook and RoutineRelayCard
     - Implement `web/src/hooks/useTaskStateMachine.ts`: TypeScript state machine with states `pending`, `completed`, `delayed` and valid transitions per design §2.6
     - Implement `web/src/components/tasks/TaskRow.tsx`: checkbox with accent-color toggle, animated checkmark SVG path draw (400ms, respects `prefers-reduced-motion`), clock icon + due time display when set
     - Implement `web/src/components/tasks/RoutineRelayCard.tsx`: vertical timeline layout, progress bar (accent-color fill), RadialProgressRing at top, drag-and-drop reorder via `@dnd-kit/core`, new task input
     - Wire TanStack Query mutations with optimistic updates for state changes and reorder
     - _Requirements: 3.1–3.6, 3.11, 3.13_
 
-  - [ ] 5.4 Implement HeatmapCalendar and StreakCounter
+  - [x] 5.4 Implement HeatmapCalendar and StreakCounter
     - Implement `web/src/components/tasks/HeatmapCalendar.tsx`: CSS Grid of 30 day cells; higher intensity color when all tasks completed that day; uses accent color scale
     - Implement `web/src/components/tasks/StreakCounter.tsx`: numeric display with flame icon showing consecutive days of full completion
     - Implement `web/src/components/charts/RadialProgressRing.tsx`: SVG circle with `stroke-dashoffset` animation, accent-color fill

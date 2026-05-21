@@ -9,7 +9,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from .config import settings
-from .routers import auth, password_reset, ledger
+from .routers import auth, password_reset, ledger, tasks
+from .jobs.rollover_job import rollover_job
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
@@ -19,7 +20,7 @@ scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Background jobs will be registered here in tasks 5.2 and 12.1
+    scheduler.add_job(rollover_job, 'cron', hour=0, minute=0, id='rollover')
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1/auth")
 app.include_router(password_reset.router, prefix="/api/v1/auth")
 app.include_router(ledger.router, prefix="/api/v1/ledger")
+app.include_router(tasks.router, prefix="/api/v1/tasks")
 
 
 @app.get("/health")
