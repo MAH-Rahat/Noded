@@ -104,6 +104,38 @@ export function LoginForm() {
           Create account
         </Link>
       </div>
+
+      {/* Guest preview button */}
+      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border)', textAlign: 'center' }}>
+        <Link
+          to="/dashboard"
+          style={{
+            display: 'inline-block',
+            width: '100%',
+            padding: '10px',
+            borderRadius: 'var(--radius-input)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-muted)',
+            textDecoration: 'none',
+            fontSize: '0.875rem',
+            textAlign: 'center',
+            transition: 'border-color 150ms, color 150ms',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-accent)'
+            e.currentTarget.style.color = 'var(--color-accent)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)'
+            e.currentTarget.style.color = 'var(--color-text-muted)'
+          }}
+        >
+          👁 Preview as Guest
+        </Link>
+        <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '6px' }}>
+          Demo mode — no backend required
+        </p>
+      </div>
     </form>
   )
 }
