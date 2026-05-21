@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import queryClient from './lib/queryClient'
 import { AuthGuard } from './components/layout/AuthGuard'
 import { useUIStore } from './stores/uiStore'
+import { SearchOverlay } from './components/overlays/SearchOverlay'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetRequestPage from './pages/ResetRequestPage'
@@ -31,6 +32,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <OnlineWatcher />
+        <SearchOverlay />
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<LoginPage />} />

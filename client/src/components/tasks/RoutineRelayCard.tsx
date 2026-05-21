@@ -26,6 +26,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { useTaskStateMachine } from '../../hooks/useTaskStateMachine'
 import api from '../../lib/api'
+import { IS_PREVIEW, MOCK_TASKS, MOCK_HISTORY } from '../../lib/mockData'
 
 interface Task {
   id: string
@@ -66,12 +67,12 @@ export function RoutineRelayCard() {
 
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ['tasks', today],
-    queryFn: () => api.get(`/api/v1/tasks?date=${today}`).then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TASKS as Task[]) : api.get(`/api/v1/tasks?date=${today}`).then((r) => r.data.data),
   })
 
   const { data: history = {} } = useQuery<Record<string, boolean>>({
     queryKey: ['tasks', 'history'],
-    queryFn: () => api.get('/api/v1/tasks/history').then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_HISTORY) : api.get('/api/v1/tasks/history').then((r) => r.data.data),
   })
 
   const toggleMutation = useMutation({

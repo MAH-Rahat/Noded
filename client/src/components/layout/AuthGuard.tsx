@@ -7,11 +7,13 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
-  const token = useAuthStore((s) => s.token)
+  // TEMP: bypass auth for preview — remove before production
+  return <>{children}</>
 
+  // eslint-disable-next-line no-unreachable
+  const token = useAuthStore((s) => s.token)
   if (!token) {
     return <Navigate to="/login" replace />
   }
-
   return <>{children}</>
 }

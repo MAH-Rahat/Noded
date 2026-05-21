@@ -9,7 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from .config import settings
-from .routers import auth, password_reset, ledger, tasks, notes, vault
+from .routers import auth, password_reset, ledger, tasks, notes, vault, search
 from .jobs.rollover_job import rollover_job
 
 # Rate limiter
@@ -52,6 +52,7 @@ app.include_router(ledger.router, prefix="/api/v1/ledger")
 app.include_router(tasks.router, prefix="/api/v1/tasks")
 app.include_router(notes.router, prefix="/api/v1/notes")
 app.include_router(vault.router, prefix="/api/v1/vault")
+app.include_router(search.router, prefix="/api/v1/search")
 
 
 @app.get("/health")

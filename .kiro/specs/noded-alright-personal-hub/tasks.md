@@ -244,14 +244,14 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 9. Search
-  - [ ] 9.1 Implement Search API
+- [x] 9. Search
+  - [x] 9.1 Implement Search API
     - Implement `api/app/routers/search.py` and `api/app/services/` search logic
     - `GET /api/v1/search?q={query}`: search note titles, task titles, and transaction categories simultaneously using SQL `ILIKE` or full-text search; return results grouped by module; requires auth
     - Optimize with appropriate DB indexes on `notes.title`, `tasks.title`, `categories.name`
     - _Requirements: 9.4, 9.5, 9.9_
 
-  - [ ] 9.2 Implement SearchOverlay component
+  - [x] 9.2 Implement SearchOverlay component
     - Implement `web/src/components/overlays/SearchOverlay.tsx`: rendered as a React portal; backdrop blur; focused text input on open; results grouped by Notes / Tasks / Transactions sections; empty state message when no results; click result navigates to item and closes overlay; Escape key closes overlay
     - Wire `Cmd+K` / `Ctrl+K` keyboard shortcut in `App.tsx` to toggle `uiStore.searchOpen`
     - Wire search icon in `GlobalStatsBar` to open overlay

@@ -6,6 +6,7 @@ import { NoteEditor } from './NoteEditor'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonBlock } from '../ui/Skeleton'
 import api from '../../lib/api'
+import { IS_PREVIEW, MOCK_NOTES } from '../../lib/mockData'
 
 interface Note {
   id: string
@@ -22,7 +23,7 @@ export function CanvasCard() {
 
   const { data: notes = [], isLoading } = useQuery<Note[]>({
     queryKey: ['notes'],
-    queryFn: () => api.get('/api/v1/notes').then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_NOTES as Note[]) : api.get('/api/v1/notes').then((r) => r.data.data),
   })
 
   const createMutation = useMutation({

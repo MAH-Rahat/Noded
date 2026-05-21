@@ -9,6 +9,7 @@ import { Skeleton, SkeletonBlock } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { useCountUp } from '../../hooks/useCountUp'
 import api from '../../lib/api'
+import { IS_PREVIEW, MOCK_SUMMARY, MOCK_TRANSACTIONS, MOCK_CATEGORIES } from '../../lib/mockData'
 
 const CATEGORY_COLORS = [
   '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B',
@@ -20,17 +21,17 @@ export function LedgerCard() {
 
   const { data: summaryData, isLoading: summaryLoading } = useQuery({
     queryKey: ['ledger', 'summary'],
-    queryFn: () => api.get('/api/v1/ledger/summary').then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then((r) => r.data.data),
   })
 
   const { data: txData, isLoading: txLoading } = useQuery({
     queryKey: ['ledger', 'transactions'],
-    queryFn: () => api.get('/api/v1/ledger/transactions?page_size=10').then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TRANSACTIONS) : api.get('/api/v1/ledger/transactions?page_size=10').then((r) => r.data.data),
   })
 
   const { data: catData } = useQuery({
     queryKey: ['ledger', 'categories'],
-    queryFn: () => api.get('/api/v1/ledger/categories').then((r) => r.data.data),
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_CATEGORIES) : api.get('/api/v1/ledger/categories').then((r) => r.data.data),
   })
 
   const deleteMutation = useMutation({
