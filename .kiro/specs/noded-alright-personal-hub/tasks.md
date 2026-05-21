@@ -79,7 +79,7 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Ensure all tests pass, ask the user if questions arise.
 
 
-- [-] 3. Frontend foundation
+- [x] 3. Frontend foundation
   - [x] 3.1 Configure Vite, TypeScript, and CSS design tokens
     - Update `web/vite.config.ts` to configure `vite-plugin-pwa` with manifest values (name, icons, theme color `#0F1115`, `display: standalone`)
     - Create `web/src/styles/globals.css` with all CSS custom properties from design §8.1 (color tokens, spacing scale, border radii)
@@ -109,19 +109,19 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Implement `<PageTransition>` wrapper: fade + `translateY(-8px)`, 300ms ease-out, respects `prefers-reduced-motion`
     - _Requirements: 1.10, 6.9, 6.23_
 
-  - [ ] 3.6 Implement Login and Register pages
+  - [x] 3.6 Implement Login and Register pages
     - Implement `<AuthCard>` in `web/src/components/auth/`: surface `#1A1C23`, max-width 400px, centered
     - Implement `<LoginForm>`: email/password inputs with accent-color focus glow, Remember_Me toggle, loading spinner on submit, error message on 401, redirect to `/dashboard` on success
     - Implement `<RegisterForm>`: username, email, password, confirm password fields; client-side validation (non-empty, email format, password ≥ 8 chars, passwords match); loading spinner; error display; redirect on success
     - Implement "Forgot password?" link and password reset request/form views
     - _Requirements: 6.9–6.24, 17.1–17.8_
 
-  - [ ] 3.7 Implement GlobalStatsBar and BentoGrid layout
+  - [x] 3.7 Implement GlobalStatsBar and BentoGrid layout
     - Implement `<GlobalStatsBar>` in `web/src/components/layout/`: fixed top strip, height 48px, z-index 100; displays current date, total Notes count, Tasks completed today, account balance; skeleton loaders while fetching; search icon; gear/profile icon; logout button; offline badge
     - Implement `<BentoGrid>` and `<ModuleCard>`: 1-col mobile → 2-col tablet → 4-col desktop CSS Grid; surface `#1A1C23`, 12px border radius; module card header with title and export icon slot
     - _Requirements: 1.1, 1.2, 1.3, 1.8, 1.9, 8.1, 16.1_
 
-  - [ ] 3.8 Checkpoint — Frontend foundation
+  - [x] 3.8 Checkpoint — Frontend foundation
     - Ensure all tests pass, ask the user if questions arise.
 
 
