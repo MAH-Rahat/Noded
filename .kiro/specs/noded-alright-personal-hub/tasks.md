@@ -189,7 +189,7 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - _Requirements: 3.7, 3.8, 3.9, 3.10_
 
 - [ ] 6. Canvas module
-  - [ ] 6.1 Implement Notes API
+  - [x] 6.1 Implement Notes API
     - Implement `api/app/routers/notes.py` and `api/app/services/note_service.py`
     - `GET /api/v1/notes`: list all notes, pinned first, requires auth
     - `POST /api/v1/notes`: validate body non-empty; return HTTP 422 on empty body
@@ -198,13 +198,13 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Persist raw markdown to `TEXT` column without transformation
     - _Requirements: 4.5–4.8, 4.13, 4.14, 7.1, 7.2, 15.2, 15.4_
 
-  - [ ] 6.2 Implement CanvasCard and NoteCard grid
+  - [x] 6.2 Implement CanvasCard and NoteCard grid
     - Implement `web/src/components/notes/NoteCard.tsx`: displays first two lines as preview snippet; Note_Tag colored dot indicator; word count and reading time (200 wpm); pin icon on pinned notes; pin action control; delete action
     - Implement `web/src/components/notes/CanvasCard.tsx`: grid view of NoteCards; pinned notes rendered first; empty state illustration when no notes; export menu in card header
     - Client-side pin limit guard: display inline error and do not submit if already 3 pinned notes
     - _Requirements: 4.1, 4.10–4.12, 15.1, 15.3, 15.5, 15.6_
 
-  - [ ] 6.3 Implement full-screen NoteEditor with live markdown preview
+  - [x] 6.3 Implement full-screen NoteEditor with live markdown preview
     - Implement `web/src/components/notes/NoteEditor.tsx`: full-screen writing mode triggered by clicking a note; fade out BentoGrid, render only editor; `react-markdown` + `remark-gfm` for real-time preview; JetBrains Mono in code blocks; tag assignment UI; exit returns to grid with fade-in transition
     - Wire auto-save with TanStack Query mutation and debounce
     - _Requirements: 4.2–4.4, 4.9, 4.14_
@@ -215,8 +215,8 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Test pinned notes appear first in list response
     - _Requirements: 4.7, 15.4_
 
-- [ ] 7. Vault module
-  - [ ] 7.1 Implement Vault API with Fernet encryption
+- [x] 7. Vault module
+  - [x] 7.1 Implement Vault API with Fernet encryption
     - Implement `api/app/services/vault_service.py`: Fernet encryption/decryption using `VAULT_ENCRYPTION_KEY` env var; never log or store plaintext
     - Implement `api/app/routers/vault.py`:
       - `POST /api/v1/vault/authenticate`: verify PIN/password with bcrypt; create `vault_sessions` record (15-min expiry); return session token; enforce lockout after 5 failed attempts (HTTP 429, 10-min lock) using `vault_lockouts` table
@@ -224,13 +224,13 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Apply rate limit: 5 requests/minute per user on `/vault/authenticate`
     - _Requirements: 5.3–5.10, 5.13, 7.1, 7.2_
 
-  - [ ] 7.2 Implement VaultCard and SnippetCard
+  - [x] 7.2 Implement VaultCard and SnippetCard
     - Implement `web/src/components/vault/VaultUnlockModal.tsx`: PIN/password input prompt; renders when vault is locked; shows lockout countdown when locked out
     - Implement `web/src/components/vault/SnippetCard.tsx`: Snippet_Type_Icon (key for `api_key`, lock for `password`, ID card for `personal_id`); Category_Badge pill; reveal/copy action
     - Implement `web/src/components/vault/VaultCard.tsx`: locked state shows no snippet content; unlocked state renders SnippetCard grid; session expiry timer via `vaultStore`; auto-lock on expiry
     - _Requirements: 5.1, 5.2, 5.4, 5.11, 5.12_
 
-  - [ ] 7.3 Implement vault session management hook
+  - [x] 7.3 Implement vault session management hook
     - Implement `web/src/hooks/useVaultSession.ts`: manages session token and expiry in `vaultStore`; sets a `setTimeout` to lock the vault at expiry; clears session on logout
     - _Requirements: 5.3, 5.4_
 
@@ -240,7 +240,7 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Test vault session expiry: expired session token rejected
     - _Requirements: 5.3, 5.5, 5.6, 5.8_
 
-- [ ] 8. Checkpoint — All four modules
+- [x] 8. Checkpoint — All four modules
   - Ensure all tests pass, ask the user if questions arise.
 
 

@@ -103,3 +103,8 @@
 .pulse {
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ─── Spinner (used in Button loading state) ──────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
