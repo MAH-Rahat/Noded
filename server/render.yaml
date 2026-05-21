@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: noded-alright-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: noded-alright-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VAULT_ENCRYPTION_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_CLAIMS_EMAIL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+databases:
+  - name: noded-alright-db
+    plan: free
