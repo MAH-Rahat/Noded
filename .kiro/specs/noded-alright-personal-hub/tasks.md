@@ -125,8 +125,8 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 4. Ledger module
-  - [ ] 4.1 Implement Ledger API (transactions, categories, summary)
+- [x] 4. Ledger module
+  - [x] 4.1 Implement Ledger API (transactions, categories, summary)
     - Implement `api/app/routers/ledger.py` and `api/app/services/ledger_service.py`
     - `GET /api/v1/ledger/transactions`: paginated, sorted by date desc, requires auth
     - `POST /api/v1/ledger/transactions`: validate amount (non-zero numeric), category_id (FK exists), date; return HTTP 422 on invalid
@@ -135,13 +135,13 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - `GET /api/v1/ledger/summary`: return monthly totals (income, expenses, burn rate) for chart data
     - _Requirements: 2.1–2.4, 2.8, 7.1, 7.2, 14.2_
 
-  - [ ] 4.2 Implement Ledger chart components
+  - [x] 4.2 Implement Ledger chart components
     - Implement `web/src/components/charts/DonutChart.tsx`: Recharts PieChart with `innerRadius`; each category segment in distinct color; over-budget segments use red fill
     - Implement `web/src/components/charts/BarChart.tsx`: Recharts BarChart with side-by-side income/expense bars per calendar month
     - Implement `web/src/components/charts/Sparkline.tsx`: compact Recharts LineChart, no axes, renders 6 data points per category
     - _Requirements: 2.5, 2.6, 2.9, 2.10, 2.12, 14.6_
 
-  - [ ] 4.3 Implement LedgerCard and TransactionList
+  - [x] 4.3 Implement LedgerCard and TransactionList
     - Implement `web/src/components/ledger/LedgerCard.tsx`: renders DonutChart, BarChart, and TransactionList; Count_Up_Animation on mount for balance/income/expenses totals
     - Implement `web/src/components/ledger/TransactionList.tsx`: displays amount (JetBrains Mono), category, date; green tint rows for income, red tint for expenses; Sparkline per category row; delete action with optimistic update
     - Implement `web/src/components/ledger/BudgetProgressBar.tsx`: horizontal bar per category; color shifts to warning at 80%, danger at 100%; warning/over-budget badge on LedgerCard header
