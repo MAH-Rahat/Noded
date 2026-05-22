@@ -1,110 +1,69 @@
-/* ─── Skeleton shimmer ─────────────────────────────────────────────────────── */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-surface) 25%,
-    var(--color-surface-2) 50%,
-    var(--color-surface) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: var(--radius-input);
-}
-
-/* ─── Page transition ──────────────────────────────────────────────────────── */
+/* ─── Page enter ───────────────────────────────────────────────────────────── */
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.page-enter {
-  animation: page-enter 300ms ease-out forwards;
-}
+.page-enter { animation: page-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 /* ─── Fade in ──────────────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+.fade-in { animation: fade-in 300ms ease forwards; }
 
-.fade-in {
-  animation: fade-in 300ms ease-out forwards;
+/* ─── Slide up ─────────────────────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slide-up 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ─── Skeleton shimmer ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-md);
 }
 
 /* ─── Checkmark draw ───────────────────────────────────────────────────────── */
 @keyframes checkmark-draw {
-  from {
-    stroke-dashoffset: 24;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
 }
-
 .checkmark-path {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
-  animation: checkmark-draw 400ms ease-out forwards;
+  animation: checkmark-draw 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ─── Count-up (handled via JS requestAnimationFrame, no CSS needed) ───────── */
-
-/* ─── Radial progress ring ─────────────────────────────────────────────────── */
-@keyframes ring-fill {
-  from {
-    stroke-dashoffset: var(--ring-circumference);
-  }
-  to {
-    stroke-dashoffset: var(--ring-offset);
-  }
+/* ─── Glow pulse ───────────────────────────────────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px var(--color-accent-glow); }
+  50%       { box-shadow: 0 0 40px var(--color-accent-glow), 0 0 60px rgba(59,130,246,0.1); }
 }
 
-.ring-progress {
-  animation: ring-fill 800ms ease-out forwards;
+/* ─── Spin ─────────────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Float ────────────────────────────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
 }
 
-/* ─── Slide up (for modals/overlays) ──────────────────────────────────────── */
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.slide-up {
-  animation: slide-up 300ms ease-out forwards;
-}
-
-/* ─── Pulse (for offline badge, warnings) ─────────────────────────────────── */
+/* ─── Pulse ────────────────────────────────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
 }
-
-.pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-/* ─── Spinner (used in Button loading state) ──────────────────────────────── */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+.pulse { animation: pulse 2s ease-in-out infinite; }

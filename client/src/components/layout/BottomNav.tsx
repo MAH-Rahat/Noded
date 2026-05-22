@@ -1,12 +1,15 @@
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import {
+  HomeIcon, TrendingUpIcon, CheckSquareIcon, FileTextIcon, ShieldIcon,
+} from '../ui/Icons'
 
 const NAV_ITEMS = [
-  { to: '/dashboard', emoji: '⚡', label: 'Home' },
-  { to: '/ledger',    emoji: '💰', label: 'Ledger' },
-  { to: '/tasks',     emoji: '✅', label: 'Tasks' },
-  { to: '/canvas',    emoji: '📝', label: 'Notes' },
-  { to: '/vault',     emoji: '🔒', label: 'Vault' },
+  { to: '/dashboard', Icon: HomeIcon,        label: 'Home' },
+  { to: '/ledger',    Icon: TrendingUpIcon,  label: 'Ledger' },
+  { to: '/tasks',     Icon: CheckSquareIcon, label: 'Tasks' },
+  { to: '/canvas',    Icon: FileTextIcon,    label: 'Notes' },
+  { to: '/vault',     Icon: ShieldIcon,      label: 'Vault' },
 ]
 
 export function BottomNav() {
@@ -16,58 +19,60 @@ export function BottomNav() {
     <nav
       style={{
         position: 'fixed',
-        bottom: '20px',
+        bottom: '24px',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 200,
+        zIndex: 'var(--z-nav)' as any,
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
-        padding: '8px 12px',
-        borderRadius: '999px',
-        // Glassmorphism
-        background: 'rgba(26, 28, 35, 0.75)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.05) inset',
+        gap: '2px',
+        padding: '6px',
+        borderRadius: 'var(--radius-pill)',
+        background: 'rgba(8, 10, 15, 0.85)',
+        backdropFilter: 'blur(32px)',
+        WebkitBackdropFilter: 'blur(32px)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow:
+          '0 20px 60px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255,255,255,0.06) inset',
       }}
     >
-      {NAV_ITEMS.map(({ to, emoji, label }) => {
+      {NAV_ITEMS.map(({ to, Icon, label }) => {
         const isActive = location.pathname === to
         return (
           <NavLink
             key={to}
             to={to}
+            title={label}
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
-              padding: '8px 14px',
+              gap: '3px',
+              padding: '10px 16px',
               borderRadius: '999px',
               textDecoration: 'none',
-              transition: 'background 200ms, transform 150ms',
+              color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
               background: isActive
-                ? 'rgba(59,130,246,0.2)'
+                ? 'rgba(59, 130, 246, 0.15)'
                 : 'transparent',
-              transform: isActive ? 'scale(1.08)' : 'scale(1)',
               border: isActive
-                ? '1px solid rgba(59,130,246,0.35)'
+                ? '1px solid rgba(59, 130, 246, 0.25)'
                 : '1px solid transparent',
+              boxShadow: isActive
+                ? '0 0 16px rgba(59, 130, 246, 0.2)'
+                : 'none',
+              transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: isActive ? 'scale(1.05)' : 'scale(1)',
             }}
           >
-            <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{emoji}</span>
-            <span
-              style={{
-                fontSize: '0.6rem',
-                fontWeight: 600,
-                letterSpacing: '0.04em',
-                color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
-                textTransform: 'uppercase',
-                transition: 'color 200ms',
-              }}
-            >
+            <Icon size={20} strokeWidth={isActive ? 2 : 1.6} />
+            <span style={{
+              fontSize: '0.55rem',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              opacity: isActive ? 1 : 0.6,
+            }}>
               {label}
             </span>
           </NavLink>

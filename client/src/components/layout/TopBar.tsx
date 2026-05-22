@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUIStore } from '../../stores/uiStore'
 import { useAuthStore } from '../../stores/authStore'
+import { SearchIcon, SettingsIcon, LogOutIcon, WifiOffIcon } from '../ui/Icons'
 import api from '../../lib/api'
 
 interface TopBarProps {
@@ -21,68 +22,62 @@ export function TopBar({ title }: TopBarProps) {
   }
 
   return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 16px',
-        // Glassmorphism
-        background: 'rgba(15, 17, 21, 0.8)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      {/* Brand / page title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link to="/dashboard" style={{ textDecoration: 'none' }}>
-          <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-accent)', letterSpacing: '-0.02em' }}>
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 'var(--z-topbar)' as any,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '14px 20px',
+      background: 'rgba(8, 10, 15, 0.8)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    }}>
+      {/* Left */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Link to="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Logo mark */}
+          <div style={{
+            width: '28px', height: '28px', borderRadius: '8px',
+            background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 12px rgba(59,130,246,0.4)',
+          }}>
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '-0.02em' }}>N</span>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
             Noded
           </span>
         </Link>
+
         {title && (
           <>
-            <span style={{ color: 'var(--color-border)', fontSize: '0.9rem' }}>/</span>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-              {title}
-            </span>
+            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>/</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{title}</span>
           </>
         )}
+
         {isOffline && (
-          <span style={{
-            fontSize: '0.65rem', color: 'var(--color-text-muted)',
-            background: 'var(--color-surface-2)', padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '4px',
+            fontSize: '0.7rem', color: 'var(--color-text-muted)',
+            background: 'rgba(255,255,255,0.05)',
+            padding: '3px 8px', borderRadius: 'var(--radius-pill)',
+            border: '1px solid rgba(255,255,255,0.08)',
           }}>
+            <WifiOffIcon size={11} />
             Offline
-          </span>
+          </div>
         )}
       </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <IconBtn onClick={openSearch} label="Search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-        </IconBtn>
-        <Link to="/settings" style={iconBtnStyle} aria-label="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </Link>
-        <IconBtn onClick={handleLogout} label="Logout">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </IconBtn>
+      {/* Right */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        <IconBtn onClick={openSearch} label="Search"><SearchIcon /></IconBtn>
+        <Link to="/settings" style={iconBtnStyle} aria-label="Settings"><SettingsIcon /></Link>
+        <IconBtn onClick={handleLogout} label="Logout"><LogOutIcon /></IconBtn>
       </div>
     </header>
   )
@@ -92,14 +87,17 @@ const iconBtnStyle: React.CSSProperties = {
   background: 'none', border: 'none', cursor: 'pointer',
   color: 'var(--color-text-muted)', display: 'flex',
   alignItems: 'center', justifyContent: 'center',
-  padding: '6px', borderRadius: '8px',
+  padding: '8px', borderRadius: '10px',
   transition: 'color 150ms, background 150ms',
   textDecoration: 'none',
 }
 
 function IconBtn({ onClick, label, children }: { onClick: () => void; label: string; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} aria-label={label} style={iconBtnStyle}>
+    <button onClick={onClick} aria-label={label} style={iconBtnStyle}
+      onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+      onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'none' }}
+    >
       {children}
     </button>
   )

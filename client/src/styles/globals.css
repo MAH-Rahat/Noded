@@ -1,126 +1,129 @@
-/* ─── Font imports ─────────────────────────────────────────────────────────── */
-@import '@fontsource/space-grotesk/400.css';
-@import '@fontsource/space-grotesk/500.css';
-@import '@fontsource/space-grotesk/700.css';
+/* ─── Fonts ────────────────────────────────────────────────────────────────── */
+@import '@fontsource/outfit/300.css';
+@import '@fontsource/outfit/400.css';
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/600.css';
+@import '@fontsource/outfit/700.css';
+@import '@fontsource/outfit/800.css';
 @import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
 
 /* ─── Design tokens ────────────────────────────────────────────────────────── */
 :root {
-  /* Colors */
-  --color-bg:           #0F1115;
-  --color-surface:      #1A1C23;
-  --color-surface-2:    #22252E;
-  --color-border:       #2A2D38;
-  --color-text-primary: #F0F0F0;
-  --color-text-muted:   #8A8F9E;
+  /* Base palette */
+  --color-bg:           #080A0F;
+  --color-bg-2:         #0D1017;
+  --color-surface:      rgba(255, 255, 255, 0.04);
+  --color-surface-2:    rgba(255, 255, 255, 0.07);
+  --color-surface-3:    rgba(255, 255, 255, 0.10);
+  --color-border:       rgba(255, 255, 255, 0.08);
+  --color-border-2:     rgba(255, 255, 255, 0.12);
 
-  /* Accent — user-selectable, default Electric Blue */
+  /* Text */
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:   #475569;
+
+  /* Accent — Electric Blue */
   --color-accent:       #3B82F6;
-  --color-accent-hover: #2563EB;
+  --color-accent-glow:  rgba(59, 130, 246, 0.25);
+  --color-accent-dim:   rgba(59, 130, 246, 0.12);
 
   /* Semantic */
-  --color-success:      #22C55E;
-  --color-danger:       #EF4444;
+  --color-success:      #10B981;
+  --color-success-dim:  rgba(16, 185, 129, 0.12);
+  --color-danger:       #F43F5E;
+  --color-danger-dim:   rgba(244, 63, 94, 0.12);
   --color-warning:      #F59E0B;
+  --color-warning-dim:  rgba(245, 158, 11, 0.12);
 
-  /* Tints for transaction rows */
-  --color-income-tint:  rgba(34, 197, 94, 0.08);
-  --color-expense-tint: rgba(239, 68, 68, 0.08);
+  /* Tints */
+  --color-income-tint:  rgba(16, 185, 129, 0.06);
+  --color-expense-tint: rgba(244, 63, 94, 0.06);
 
-  /* Border radius */
-  --radius-card:  12px;
-  --radius-input: 8px;
+  /* Glassmorphism */
+  --glass-bg:           rgba(13, 16, 23, 0.7);
+  --glass-border:       rgba(255, 255, 255, 0.08);
+  --glass-blur:         blur(20px);
+  --glass-shadow:       0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* Radius */
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    20px;
   --radius-pill:  9999px;
 
-  /* Spacing scale (4px base) */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-12: 48px;
+  /* Spacing */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px; --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px; --space-10: 40px; --space-12: 48px;
 
   /* Typography */
-  --font-ui:   'Space Grotesk', system-ui, sans-serif;
+  --font-ui:   'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Z-index layers */
-  --z-stats-bar:  100;
-  --z-overlay:    200;
-  --z-modal:      300;
-  --z-toast:      400;
-
-  /* Transitions */
-  --transition-fast:   150ms ease-out;
-  --transition-normal: 300ms ease-out;
+  /* Z-index */
+  --z-topbar:  100;
+  --z-overlay: 200;
+  --z-modal:   300;
+  --z-nav:     150;
 }
 
 /* ─── Reset ────────────────────────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  height: 100%;
-  scroll-behavior: smooth;
-}
+html { height: 100%; }
 
 body {
   min-height: 100%;
   background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ─── Glass card mixin ─────────────────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
-/* ─── Typography helpers ───────────────────────────────────────────────────── */
-.font-mono {
-  font-family: var(--font-mono);
-}
-
-/* ─── Focus visible ────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+.glass-card {
+  background: rgba(13, 16, 23, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--radius-pill);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* ─── Focus ────────────────────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* ─── Reduced motion ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
