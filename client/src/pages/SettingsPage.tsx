@@ -14,6 +14,16 @@ const ACCENT_OPTIONS = [
   { label: 'Rose Red',       value: '#F43F5E' },
   { label: 'Amber',          value: '#F59E0B' },
   { label: 'Cyan',           value: '#06B6D4' },
+  { label: 'Pink',           value: '#EC4899' },
+  { label: 'Lime',           value: '#84CC16' },
+  { label: 'Orange',         value: '#F97316' },
+  { label: 'Indigo',         value: '#6366F1' },
+  // Custom color — user can pick any hex
+]
+  { label: 'Violet Purple',  value: '#8B5CF6' },
+  { label: 'Rose Red',       value: '#F43F5E' },
+  { label: 'Amber',          value: '#F59E0B' },
+  { label: 'Cyan',           value: '#06B6D4' },
 ]
 
 const BG_OPTIONS = [
@@ -218,15 +228,28 @@ export default function SettingsPage() {
 
       {/* Accent color */}
       <Section title="Accent Color">
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           {ACCENT_OPTIONS.map(({ label, value }) => (
             <button key={value} onClick={() => handleAccent(value)} title={label}
               className="scale-hover"
               style={{ width: '36px', height: '36px', borderRadius: '50%', background: value, border: '3px solid transparent', cursor: 'pointer', boxShadow: '0 0 0 2px rgba(255,255,255,0.1)' }}
             />
           ))}
+          {/* Custom color picker */}
+          <label title="Custom color" style={{ cursor: 'pointer' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)', border: '3px solid transparent', boxShadow: '0 0 0 2px rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>🎨</div>
+            <input type="color" onChange={e => handleAccent(e.target.value)} style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} />
+          </label>
         </div>
-        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '10px' }}>Changes apply instantly across the app</p>
+        {/* Default (Pokemon) button */}
+        <button onClick={() => {
+          const pokemonColor = colors.hex
+          handleAccent(pokemonColor)
+        }} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: 'var(--radius-pill)', border: `1px solid ${colors.hex}`, background: colors.dim, color: colors.hex, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {spriteUrl && <img src={spriteUrl} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', imageRendering: 'pixelated' }} />}
+          Use Pokémon Default ({pokemonName})
+        </button>
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '10px' }}>Changes apply instantly across the whole app</p>
       </Section>
 
       {/* Background */}

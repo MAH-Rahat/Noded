@@ -8,6 +8,7 @@ import { RadialProgressRing } from '../components/charts/RadialProgressRing'
 import { Sparkline } from '../components/charts/Sparkline'
 import { usePokemonStore, POKEMON_TYPE_COLORS, getTierFromXP } from '../stores/pokemonStore'
 import { useUIStore } from '../stores/uiStore'
+import { useAuthStore } from '../stores/authStore'
 import { TrendingUpIcon, CheckSquareIcon, FileTextIcon, ShieldIcon, ChevronRightIcon, FlameIcon, ClockIcon, PlusIcon } from '../components/ui/Icons'
 import { IS_PREVIEW, MOCK_SUMMARY, MOCK_TASKS, MOCK_NOTES, MOCK_TRANSACTIONS, MOCK_HISTORY } from '../lib/mockData'
 import api from '../lib/api'
@@ -105,6 +106,7 @@ export default function DashboardPage() {
   const qc = useQueryClient()
   const [quickTask, setQuickTask] = useState('')
   const { dashWidgets } = useUIStore()
+  const user = useAuthStore((s) => s.user)
 
   const { data: summary } = useQuery({ queryKey: ['ledger', 'summary'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then(r => r.data.data) })
   const { data: tasks = [] } = useQuery<any[]>({ queryKey: ['tasks', today.toISOString().split('T')[0]], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TASKS) : api.get('/api/v1/tasks').then(r => r.data.data) })
@@ -142,7 +144,9 @@ export default function DashboardPage() {
     <PageLayout>
       <div style={{ marginBottom: '20px', paddingTop: '4px' }}>
         <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 500, marginBottom: '5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{dateStr}</p>
-        <h1 style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.03em', lineHeight: 1.2 }}>{getGreeting()}</h1>
+        <h1 style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+          {getGreeting()}{user?.username ? `, ${user.username}` : ''}
+        </h1>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '5px' }}>Your trainer stats are looking {taskPct >= 75 ? 'legendary' : taskPct >= 50 ? 'solid' : 'like they need a grind'}</p>
       </div>
 
