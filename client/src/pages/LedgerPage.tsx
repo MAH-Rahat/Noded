@@ -65,6 +65,7 @@ export default function LedgerPage() {
   const [catForm, setCatForm] = useState({ name: '', color: 'var(--color-accent)', budget_limit: '' })
   const [editCat, setEditCat] = useState<any | null>(null)
   const [catMsg, setCatMsg] = useState('')
+  const [pieRange, setPieRange] = useState<'day' | 'week' | 'month'>('month')
 
   const { data: summary } = useQuery({ queryKey: ['ledger', 'summary'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then(r => r.data.data) })
   const { data: txData } = useQuery({ queryKey: ['ledger', 'transactions'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TRANSACTIONS) : api.get('/api/v1/ledger/transactions?page_size=50').then(r => r.data.data) })
@@ -95,10 +96,24 @@ export default function LedgerPage() {
   const monthStr = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
   const chartData = (summary?.monthly || []).map((m: any) => ({ month: m.month.slice(5), income: Number(m.income), expenses: Number(m.expenses) }))
 
-  // Pie chart: expense breakdown by category
+  // Pie chart: expense breakdown by category filtered by range
+  const now = new Date()
+  const pieFilteredTx = transactions.filter((tx: any) => {
+    if (tx.type !== 'expense') return false
+    const txDate = new Date(tx.date)
+    if (pieRange === 'day') {
+      return tx.date === now.toISOString().split('T')[0]
+    } else if (pieRange === 'week') {
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7)
+      return txDate >= weekAgo
+    } else {
+      // month
+      return tx.date.startsWith(now.toISOString().slice(0, 7))
+    }
+  })
   const pieData = cats
     .map((c: any) => {
-      const spent = transactions.filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
+      const spent = pieFilteredTx.filter((t: any) => t.category_id === c.id).reduce((s: number, t: any) => s + Number(t.amount), 0)
       return { name: c.name, value: spent }
     })
     .filter((d: any) => d.value > 0)
@@ -189,18 +204,29 @@ export default function LedgerPage() {
         )}
 
         {/* Expense breakdown pie chart */}
-        {pieData.length > 0 && (
+        {(pieData.length > 0 || pieFilteredTx.length === 0) && (
           <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
-            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '14px' }}>WHERE YOU SPEND MOST</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                  {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
-                <Legend iconType="circle" iconSize={8} formatter={(value: string) => <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{value}</span>} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em' }}>WHERE YOU SPEND MOST</div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {(['day', 'week', 'month'] as const).map(r => (
+                  <button key={r} onClick={() => setPieRange(r)} style={{ padding: '3px 9px', borderRadius: 'var(--radius-pill)', fontSize: '0.65rem', fontWeight: 700, border: `1px solid ${pieRange === r ? Y : 'var(--color-border)'}`, background: pieRange === r ? Y + '15' : 'transparent', color: pieRange === r ? Y : 'var(--color-text-muted)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'all 150ms' }}>{r}</button>
+                ))}
+              </div>
+            </div>
+            {pieData.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>No expenses for this {pieRange}</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                    {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
+                  <Legend iconType="circle" iconSize={8} formatter={(value: string) => <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{value}</span>} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         )}
 
