@@ -19,9 +19,9 @@ export function BottomNav() {
           <NavLink key={to} to={to} className={`nav-item${isActive ? ' active' : ''}`}>
             <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
             <span style={{
-              fontSize: '0.5rem',
+              fontSize: '0.48rem',
               fontFamily: 'var(--font-head)',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
             }}>
               {label}

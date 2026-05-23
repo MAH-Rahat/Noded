@@ -17,7 +17,7 @@ export function PageLayout({ title, children }: PageLayoutProps) {
         className="page-enter"
         style={{
           flex: 1,
-          padding: '16px 16px 80px', // bottom padding for bottom nav
+          padding: '16px 16px 72px', // bottom padding for flat bottom nav
           maxWidth: '800px',
           width: '100%',
           margin: '0 auto',
