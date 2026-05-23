@@ -23,27 +23,82 @@ export const POKEMON_TYPE_COLORS: Record<string, { hex: string; glow: string; di
   fairy:    { hex: '#D685AD', glow: 'rgba(214,133,173,0.4)',  dim: 'rgba(214,133,173,0.14)', name: 'Fairy' },
 }
 
-// Determine Pokémon type from user stats
-export function determineType(taskPct: number, savingsRate: number): string {
-  // Savings rate drives primary type
-  if (savingsRate < 0)   return 'fire'      // Overspending — burning money
-  if (savingsRate < 10)  return 'fighting'  // Struggling
-  if (savingsRate < 20)  return 'grass'     // Growing slowly
-  if (savingsRate < 30)  return 'water'     // Flowing, balanced
-  if (savingsRate < 40)  return 'electric'  // Energetic, building up
-  if (savingsRate < 55)  return 'dragon'    // Powerful, ambitious
-  if (savingsRate < 70)  return 'psychic'   // Highly strategic
-  return 'steel'                            // Fortress-level savings
+// ── Ranked tier system ────────────────────────────────────────────────────────
+// Tiers: Bronze 1-3, Silver 1-3, Gold 1-3, Platinum 1-3, Diamond 1-3, Master
+export const TIERS = [
+  { name: 'Bronze',   divisions: 3, color: '#CD7F32' },
+  { name: 'Silver',   divisions: 3, color: '#C0C0C0' },
+  { name: 'Gold',     divisions: 3, color: '#FFD700' },
+  { name: 'Platinum', divisions: 3, color: '#00E5FF' },
+  { name: 'Diamond',  divisions: 3, color: '#B9F2FF' },
+  { name: 'Master',   divisions: 1, color: '#FF6B6B' },
+]
+
+// Total XP thresholds per tier-division (100 XP per division, 300 per tier)
+const XP_PER_DIVISION = 100
+const TOTAL_DIVISIONS = TIERS.reduce((s, t) => s + t.divisions, 0) // 16
+
+export function getTierFromXP(xp: number): { tierName: string; division: number; tierColor: string; xpInDivision: number; xpForNext: number; totalXP: number } {
+  const clampedXP = Math.max(0, xp)
+  let remaining = clampedXP
+  for (const tier of TIERS) {
+    for (let d = tier.divisions; d >= 1; d--) {
+      if (remaining < XP_PER_DIVISION || (tier.name === 'Master' && d === 1)) {
+        return {
+          tierName: tier.name,
+          division: d,
+          tierColor: tier.color,
+          xpInDivision: Math.min(remaining, XP_PER_DIVISION),
+          xpForNext: XP_PER_DIVISION,
+          totalXP: clampedXP,
+        }
+      }
+      remaining -= XP_PER_DIVISION
+    }
+  }
+  // Max rank
+  return { tierName: 'Master', division: 1, tierColor: '#FF6B6B', xpInDivision: XP_PER_DIVISION, xpForNext: XP_PER_DIVISION, totalXP: clampedXP }
 }
 
-// Determine level from task completion history
+// XP gains and losses
+export const XP_RULES = {
+  taskCompleted: +15,       // Complete a task
+  streakBonus: +5,          // Per day of streak (applied daily)
+  allTasksToday: +25,       // Complete ALL tasks for the day
+  missedStreak: -20,        // Break a streak (miss a day)
+  highPriorityMissed: -10,  // High priority task overdue 2+ days
+  expenseOnBudget: +10,     // Monthly expenses within budget
+  expenseOverBudget: -15,   // Monthly expenses over budget
+  noteCreated: +5,          // Create a note
+}
+
+// Determine Pokémon type from XP tier
+export function determineTypeFromTier(tierName: string): string {
+  const map: Record<string, string> = {
+    Bronze: 'fighting', Silver: 'water', Gold: 'electric',
+    Platinum: 'psychic', Diamond: 'dragon', Master: 'fairy',
+  }
+  return map[tierName] ?? 'water'
+}
+
+// Legacy: keep for backward compat
+export function determineType(taskPct: number, savingsRate: number): string {
+  if (savingsRate < 0)   return 'fire'
+  if (savingsRate < 10)  return 'fighting'
+  if (savingsRate < 20)  return 'grass'
+  if (savingsRate < 30)  return 'water'
+  if (savingsRate < 40)  return 'electric'
+  if (savingsRate < 55)  return 'dragon'
+  if (savingsRate < 70)  return 'psychic'
+  return 'steel'
+}
+
 export function determineLevel(streak: number, taskPct: number): number {
   const base = Math.min(streak * 3, 60)
   const bonus = Math.round(taskPct * 0.4)
   return Math.max(1, Math.min(100, base + bonus))
 }
 
-// Pick a Pokémon name for the type (iconic representative)
 export const TYPE_POKEMON: Record<string, { name: string; id: number; description: string }> = {
   normal:   { name: 'Snorlax',    id: 143, description: 'Steady and reliable — you keep things moving at your own pace.' },
   fire:     { name: 'Charizard',  id: 6,   description: 'Burning through budget — channel that fire into income!' },
@@ -68,32 +123,56 @@ export const TYPE_POKEMON: Record<string, { name: string; id: number; descriptio
 interface PokemonState {
   type: string
   level: number
+  xp: number
   pokemonName: string
   pokemonId: number
   spriteUrl: string | null
   description: string
   lastUpdated: number
+  lastXPDate: string  // YYYY-MM-DD — track daily XP to avoid double-counting
   setProfile: (type: string, level: number) => void
   setSprite: (url: string) => void
+  addXP: (amount: number) => void
+  setXP: (xp: number) => void
 }
 
 export const usePokemonStore = create<PokemonState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       type: 'water',
       level: 1,
+      xp: 0,
       pokemonName: 'Vaporeon',
       pokemonId: 134,
       spriteUrl: null,
       description: 'Fluid and adaptable.',
       lastUpdated: 0,
+      lastXPDate: '',
 
       setProfile: (type, level) => {
         const poke = TYPE_POKEMON[type] ?? TYPE_POKEMON.water
         set({ type, level, pokemonName: poke.name, pokemonId: poke.id, description: poke.description, lastUpdated: Date.now() })
       },
       setSprite: (url) => set({ spriteUrl: url }),
+      addXP: (amount) => {
+        const newXP = Math.max(0, get().xp + amount)
+        const tier = getTierFromTier(newXP)
+        const newType = determineTypeFromTier(tier)
+        const poke = TYPE_POKEMON[newType] ?? TYPE_POKEMON.water
+        set({ xp: newXP, type: newType, pokemonName: poke.name, pokemonId: poke.id, description: poke.description, lastUpdated: Date.now() })
+      },
+      setXP: (xp) => {
+        const newXP = Math.max(0, xp)
+        const tier = getTierFromTier(newXP)
+        const newType = determineTypeFromTier(tier)
+        const poke = TYPE_POKEMON[newType] ?? TYPE_POKEMON.water
+        set({ xp: newXP, type: newType, pokemonName: poke.name, pokemonId: poke.id, description: poke.description })
+      },
     }),
     { name: 'noded-pokemon' }
   )
 )
+
+function getTierFromTier(xp: number): string {
+  return getTierFromXP(xp).tierName
+}

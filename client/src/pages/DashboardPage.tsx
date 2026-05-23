@@ -6,7 +6,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import { usePokemonTheme } from '../hooks/usePokemonTheme'
 import { RadialProgressRing } from '../components/charts/RadialProgressRing'
 import { Sparkline } from '../components/charts/Sparkline'
-import { usePokemonStore, POKEMON_TYPE_COLORS } from '../stores/pokemonStore'
+import { usePokemonStore, POKEMON_TYPE_COLORS, getTierFromXP } from '../stores/pokemonStore'
 import { useUIStore } from '../stores/uiStore'
 import { TrendingUpIcon, CheckSquareIcon, FileTextIcon, ShieldIcon, ChevronRightIcon, FlameIcon, ClockIcon, PlusIcon } from '../components/ui/Icons'
 import { IS_PREVIEW, MOCK_SUMMARY, MOCK_TASKS, MOCK_NOTES, MOCK_TRANSACTIONS, MOCK_HISTORY } from '../lib/mockData'
@@ -67,8 +67,10 @@ function SectionHeader({ title, linkTo, linkLabel = 'View all' }: { title: strin
 }
 
 function PokemonCard() {
-  const { type, level, pokemonName, description, spriteUrl } = usePokemonStore()
+  const { type, pokemonName, description, spriteUrl, xp } = usePokemonStore()
   const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.water
+  const tierInfo = getTierFromXP(xp ?? 0)
+  const tierLabel = tierInfo.tierName === 'Master' ? 'Master' : `${tierInfo.tierName} ${tierInfo.division}`
   return (
     <div className="glass-card" style={{ padding: '20px', marginBottom: '24px', position: 'relative', overflow: 'hidden', border: '1px solid ' + colors.hex + '30' }}>
       <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: colors.glow, filter: 'blur(50px)', pointerEvents: 'none' }} />
@@ -81,13 +83,18 @@ function PokemonCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>{pokemonName}</span>
             <span className="poke-type-badge" style={{ '--color-accent': colors.hex, '--color-accent-dim': colors.dim } as any}>{type}</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: tierInfo.tierColor, background: tierInfo.tierColor + '20', padding: '2px 7px', borderRadius: '4px', border: `1px solid ${tierInfo.tierColor}40` }}>{tierLabel}</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '10px', lineHeight: 1.5 }}>{description}</div>
+          {/* XP bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: colors.hex, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>Lv.{level}</span>
-            <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}><div className="level-bar-fill" style={{ width: level + '%' }} /></div>
-            <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{level}/100</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: tierInfo.tierColor, flexShrink: 0 }}>{tierInfo.xpInDivision} XP</span>
+            <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(tierInfo.xpInDivision / tierInfo.xpForNext) * 100}%`, background: `linear-gradient(90deg, ${tierInfo.tierColor}, ${colors.hex})`, borderRadius: '2px', transition: 'width 1s ease-out', boxShadow: `0 0 8px ${tierInfo.tierColor}80` }} />
+            </div>
+            <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{tierInfo.xpForNext} XP</span>
           </div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '3px' }}>Total XP: {tierInfo.totalXP}</div>
         </div>
       </div>
     </div>
@@ -112,6 +119,9 @@ export default function DashboardPage() {
   const taskPct = totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0
   const balance = useCountUp(summary ? Number(summary.total_balance) : 0)
   const savingsRate = summary && summary.total_income > 0 ? Math.round(((summary.total_income - summary.total_expenses) / summary.total_income) * 100) : 20
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const monthData = summary?.monthly?.find((m: any) => m.month === currentMonth)
+  const burnOk = monthData ? Number(monthData.expenses) <= Number(monthData.income) : true
 
   const streak = useMemo(() => {
     let count = 0; const d = new Date()
@@ -119,7 +129,7 @@ export default function DashboardPage() {
     return count
   }, [history])
 
-  usePokemonTheme({ taskPct, savingsRate, streak })
+  usePokemonTheme({ taskPct, savingsRate, streak, completedToday, totalToday, expenseOnBudget: burnOk })
 
   const balanceSparkData = useMemo(() => summary?.monthly?.map((m: any) => m.income - m.expenses) ?? [], [summary])
   const expenseSparkData = useMemo(() => summary?.monthly?.map((m: any) => m.expenses) ?? [], [summary])

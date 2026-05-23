@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   usePokemonStore,
   POKEMON_TYPE_COLORS,
   determineType,
   determineLevel,
+  getTierFromXP,
+  XP_RULES,
 } from '../stores/pokemonStore'
 
 // Darken a hex color by a factor (0–1)
@@ -20,17 +22,41 @@ interface ThemeInput {
   taskPct: number
   savingsRate: number
   streak: number
+  completedToday?: number
+  totalToday?: number
+  expenseOnBudget?: boolean
 }
 
-export function usePokemonTheme({ taskPct, savingsRate, streak }: ThemeInput) {
-  const { type, level, pokemonId, setProfile, setSprite, spriteUrl } = usePokemonStore()
+export function usePokemonTheme({ taskPct, savingsRate, streak, completedToday = 0, totalToday = 0, expenseOnBudget }: ThemeInput) {
+  const { type, xp, pokemonId, addXP, setSprite, spriteUrl } = usePokemonStore()
+  const prevStreakRef = useRef(streak)
+  const prevCompletedRef = useRef(completedToday)
+  const prevBudgetRef = useRef(expenseOnBudget)
+  const todayKey = new Date().toISOString().split('T')[0]
+  const lastXPDate = usePokemonStore(s => s.lastXPDate)
 
-  // Recalculate profile when stats change
+  // Apply daily XP based on activity — only once per day
   useEffect(() => {
-    const newType = determineType(taskPct, savingsRate)
-    const newLevel = determineLevel(streak, taskPct)
-    setProfile(newType, newLevel)
-  }, [taskPct, savingsRate, streak])
+    if (lastXPDate === todayKey) return // already applied today
+    let delta = 0
+
+    // Task completion XP
+    if (completedToday > 0) delta += completedToday * XP_RULES.taskCompleted
+    if (totalToday > 0 && completedToday === totalToday) delta += XP_RULES.allTasksToday
+
+    // Streak XP/penalty
+    if (streak > 0) delta += streak * XP_RULES.streakBonus
+    else if (prevStreakRef.current > 0 && streak === 0) delta += XP_RULES.missedStreak
+
+    // Budget XP/penalty
+    if (expenseOnBudget === true) delta += XP_RULES.expenseOnBudget
+    else if (expenseOnBudget === false) delta += XP_RULES.expenseOverBudget
+
+    if (delta !== 0) {
+      addXP(delta)
+      usePokemonStore.setState({ lastXPDate: todayKey })
+    }
+  }, [todayKey])
 
   // Fetch sprite from PokéAPI
   const { data: pokeData } = useQuery({
@@ -38,7 +64,7 @@ export function usePokemonTheme({ taskPct, savingsRate, streak }: ThemeInput) {
     queryFn: () =>
       fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`)
         .then(r => r.json()),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60,
     enabled: !!pokemonId,
   })
 
@@ -61,11 +87,11 @@ export function usePokemonTheme({ taskPct, savingsRate, streak }: ThemeInput) {
       document.documentElement.style.setProperty('--color-accent-dim', colors.dim)
     }
     applyColors()
-    // Re-apply when theme attribute changes
     const observer = new MutationObserver(applyColors)
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [type])
 
-  return { type, level, colors, spriteUrl }
+  const tierInfo = getTierFromXP(xp)
+  return { type, xp, tierInfo, colors, spriteUrl }
 }
