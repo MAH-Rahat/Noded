@@ -7,6 +7,15 @@ import {
   determineLevel,
 } from '../stores/pokemonStore'
 
+// Darken a hex color by a factor (0–1)
+function darkenHex(hex: string, factor: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const d = (v: number) => Math.max(0, Math.round(v * (1 - factor))).toString(16).padStart(2, '0')
+  return `#${d(r)}${d(g)}${d(b)}`
+}
+
 interface ThemeInput {
   taskPct: number
   savingsRate: number
@@ -41,12 +50,21 @@ export function usePokemonTheme({ taskPct, savingsRate, streak }: ThemeInput) {
     }
   }, [pokeData])
 
-  // Apply CSS variables
+  // Apply CSS variables — darken accent in light mode for contrast
   const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.water
   useEffect(() => {
-    document.documentElement.style.setProperty('--color-accent', colors.hex)
-    document.documentElement.style.setProperty('--color-accent-glow', colors.glow)
-    document.documentElement.style.setProperty('--color-accent-dim', colors.dim)
+    const applyColors = () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light'
+      const accentHex = isLight ? darkenHex(colors.hex, 0.25) : colors.hex
+      document.documentElement.style.setProperty('--color-accent', accentHex)
+      document.documentElement.style.setProperty('--color-accent-glow', colors.glow)
+      document.documentElement.style.setProperty('--color-accent-dim', colors.dim)
+    }
+    applyColors()
+    // Re-apply when theme attribute changes
+    const observer = new MutationObserver(applyColors)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
   }, [type])
 
   return { type, level, colors, spriteUrl }

@@ -1,325 +1,330 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageLayout } from '../components/layout/PageLayout'
 import { useCountUp } from '../hooks/useCountUp'
-import { TrendingUpIcon, PlusIcon, DownloadIcon, TrashIcon } from '../components/ui/Icons'
+import { TrashIcon, DownloadIcon } from '../components/ui/Icons'
 import { IS_PREVIEW, MOCK_SUMMARY, MOCK_TRANSACTIONS, MOCK_CATEGORIES } from '../lib/mockData'
 import api from '../lib/api'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from 'recharts'
 
-const COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#F43F5E','#06B6D4','#84CC16','#EC4899']
+const Y = "var(--color-accent)"
+const MINT = '#00E5A0'
+const RED = '#FF4444'
+const MUTED = '#5A5A72'
+const PIE_COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#10B981', '#F43F5E', '#84CC16', '#F97316', '#A855F7']
+const CAT_COLORS: Record<string, string> = { Food: '#F59E0B', Transport: '#3D6BFF', Education: '#8B5CF6', Utilities: '#06B6D4', Personal: '#EC4899', Income: '#00E5A0' }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null
+function EmptyTrainer() {
   return (
-    <div style={{ background: 'rgba(13,16,23,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', backdropFilter: 'blur(20px)' }}>
-      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '6px' }}>{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ fontSize: '0.85rem', fontFamily: 'var(--font-mono)', color: p.color, fontWeight: 600 }}>
-          {p.name}: ৳{Number(p.value).toLocaleString()}
-        </p>
-      ))}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '32px 20px' }}>
+      <svg width="40" height="40" viewBox="0 0 48 48" fill="none" style={{ opacity: 0.2 }}>
+        <circle cx="24" cy="24" r="22" stroke="var(--color-text-muted)" strokeWidth="2" />
+        <path d="M2 24 H46" stroke="var(--color-text-muted)" strokeWidth="2" />
+        <circle cx="24" cy="24" r="6" stroke="var(--color-text-muted)" strokeWidth="2" fill="var(--color-surface)" />
+      </svg>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Nothing here, Trainer.</span>
+    </div>
+  )
+}
+
+function CategoryBar({ name, spent, budget, color }: { name: string; spent: number; budget: number | null; color: string }) {
+  const pct = budget ? Math.min((spent / budget) * 100, 100) : 0
+  const isOver = pct >= 100; const isWarn = pct >= 80 && !isOver
+  const barColor = isOver ? RED : isWarn ? '#F59E0B' : Y
+  return (
+    <div style={{ marginBottom: '14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color, flexShrink: 0 }} />
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-primary)' }}>{name}</span>
+          <span style={{ padding: '1px 5px', borderRadius: 'var(--radius-pill)', border: '1px solid ' + MUTED, color: MUTED, background: MUTED + '10', fontFamily: 'var(--font-head)', fontSize: '0.5rem', letterSpacing: '0.06em' }}>SPEND</span>
+        </div>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-primary)' }}>BDT {spent.toLocaleString()}</span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <div className="hp-bar-track">
+          <div className={'hp-bar-fill' + (isOver ? ' warn' : isWarn ? ' caution' : '')} style={{ width: (budget ? pct : 0) + '%', background: barColor }} />
+        </div>
+        {budget && <span style={{ position: 'absolute', right: 0, top: '-16px', fontFamily: 'var(--font-pixel)', fontSize: '0.45rem', color: barColor }}>{Math.round(pct)}%</span>}
+      </div>
     </div>
   )
 }
 
 export default function LedgerPage() {
   const qc = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'overview'|'transactions'|'add'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'budget'>('overview')
+  const [showAdd, setShowAdd] = useState(false)
+  const [balanceVisible, setBalanceVisible] = useState(true)
+  const [quickCat, setQuickCat] = useState<string | null>(null)
   const [form, setForm] = useState({ amount: '', type: 'expense', description: '', date: new Date().toISOString().split('T')[0], category_id: '' })
   const [addSuccess, setAddSuccess] = useState(false)
+  const [catForm, setCatForm] = useState({ name: '', color: 'var(--color-accent)', budget_limit: '' })
+  const [editCat, setEditCat] = useState<any | null>(null)
+  const [catMsg, setCatMsg] = useState('')
 
-  const { data: summary } = useQuery({
-    queryKey: ['ledger', 'summary'],
-    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then(r => r.data.data),
-  })
-  const { data: txData } = useQuery({
-    queryKey: ['ledger', 'transactions'],
-    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TRANSACTIONS) : api.get('/api/v1/ledger/transactions?page_size=50').then(r => r.data.data),
-  })
-  const { data: cats = [] } = useQuery<any[]>({
-    queryKey: ['ledger', 'categories'],
-    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_CATEGORIES) : api.get('/api/v1/ledger/categories').then(r => r.data.data),
-  })
+  const { data: summary } = useQuery({ queryKey: ['ledger', 'summary'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then(r => r.data.data) })
+  const { data: txData } = useQuery({ queryKey: ['ledger', 'transactions'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TRANSACTIONS) : api.get('/api/v1/ledger/transactions?page_size=50').then(r => r.data.data) })
+  const { data: cats = [] } = useQuery<any[]>({ queryKey: ['ledger', 'categories'], queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_CATEGORIES) : api.get('/api/v1/ledger/categories').then(r => r.data.data) })
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/api/v1/ledger/transactions/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ledger'] }),
-  })
-
+  const deleteTxMutation = useMutation({ mutationFn: (id: string) => api.delete('/api/v1/ledger/transactions/' + id), onSuccess: () => qc.invalidateQueries({ queryKey: ['ledger'] }) })
   const createTxMutation = useMutation({
-    mutationFn: (data: typeof form) => api.post('/api/v1/ledger/transactions', {
-      amount: Number(data.amount),
-      type: data.type,
-      description: data.description,
-      date: data.date,
-      category_id: data.category_id || undefined,
-    }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['ledger'] })
-      setForm({ amount: '', type: 'expense', description: '', date: new Date().toISOString().split('T')[0], category_id: '' })
-      setActiveTab('transactions')
-      setAddSuccess(true)
-      setTimeout(() => setAddSuccess(false), 2500)
-    },
+    mutationFn: (data: typeof form) => api.post('/api/v1/ledger/transactions', { amount: Number(data.amount), type: data.type, description: data.description, date: data.date, category_id: data.category_id || undefined }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ledger'] }); setForm({ amount: '', type: 'expense', description: '', date: new Date().toISOString().split('T')[0], category_id: '' }); setShowAdd(false); setQuickCat(null); setAddSuccess(true); setTimeout(() => setAddSuccess(false), 2500) },
+  })
+  const createCatMutation = useMutation({
+    mutationFn: () => api.post('/api/v1/ledger/categories', { name: catForm.name, color: catForm.color, budget_limit: catForm.budget_limit ? Number(catForm.budget_limit) : null }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ledger', 'categories'] }); setCatForm({ name: '', color: 'var(--color-accent)', budget_limit: '' }); setCatMsg('Category created!'); setTimeout(() => setCatMsg(''), 2000) },
+  })
+  const updateCatMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => api.patch('/api/v1/ledger/categories/' + id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['ledger', 'categories'] }); setEditCat(null); setCatMsg('Updated!'); setTimeout(() => setCatMsg(''), 2000) },
   })
 
   const balance = useCountUp(summary ? Number(summary.total_balance) : 0)
   const income = useCountUp(summary ? Number(summary.total_income) : 0)
   const expenses = useCountUp(summary ? Number(summary.total_expenses) : 0)
+  const transactions = (txData?.items || []).map((tx: any) => ({ ...tx, categoryName: cats.find((c: any) => c.id === tx.category_id)?.name || 'Other' }))
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const monthData = summary?.monthly?.find((m: any) => m.month === currentMonth)
+  const burnOk = monthData ? monthData.expenses <= monthData.income : true
+  const anomaly = cats.find((c: any) => { if (!c.budget_limit) return false; const spent = transactions.filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0); return spent > Number(c.budget_limit) * 1.2 })
+  const monthStr = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
+  const chartData = (summary?.monthly || []).map((m: any) => ({ month: m.month.slice(5), income: Number(m.income), expenses: Number(m.expenses) }))
 
-  const areaData = (summary?.monthly || []).map((m: any) => ({
-    month: m.month.slice(5),
-    income: Number(m.income),
-    expenses: Number(m.expenses),
-    net: Number(m.income) - Number(m.expenses),
-  }))
+  // Pie chart: expense breakdown by category
+  const pieData = cats
+    .map((c: any) => {
+      const spent = transactions.filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
+      return { name: c.name, value: spent }
+    })
+    .filter((d: any) => d.value > 0)
+    .sort((a: any, b: any) => b.value - a.value)
 
-  const donutData = cats.map((c: any, i: number) => {
-    const spent = (txData?.items || []).filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
-    return { name: c.name, value: spent, color: c.color || COLORS[i % COLORS.length] }
-  }).filter((d: any) => d.value > 0)
-
-  const transactions = (txData?.items || []).map((tx: any) => ({
-    ...tx,
-    categoryName: cats.find((c: any) => c.id === tx.category_id)?.name || '—',
-  }))
-
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'transactions', label: `Transactions (${transactions.length})` },
-    { id: 'add', label: '+ Add' },
-  ]
+  function openQuickLog(cat: string) { setQuickCat(cat); setForm(f => ({ ...f, type: 'expense', description: cat })); setShowAdd(true); setActiveTab('overview') }
 
   return (
-    <PageLayout title="Ledger">
-      {/* Hero stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '24px' }}>
-        {[
-          { label: 'Net Balance', value: balance, color: '#3B82F6', glow: 'rgba(59,130,246,0.15)', prefix: '৳' },
-          { label: 'Total Income', value: income, color: '#10B981', glow: 'rgba(16,185,129,0.12)', prefix: '৳' },
-          { label: 'Total Spent', value: expenses, color: '#F43F5E', glow: 'rgba(244,63,94,0.12)', prefix: '৳' },
-        ].map(({ label, value, color, glow, prefix }) => (
-          <div key={label} className="glass-card" style={{ padding: '16px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '-15px', right: '-15px', width: '60px', height: '60px', borderRadius: '50%', background: glow, filter: 'blur(20px)', pointerEvents: 'none' }} />
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>{label}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 700, color, letterSpacing: '-0.02em' }}>
-              {prefix}{value.toLocaleString()}
-            </div>
-          </div>
-        ))}
+    <PageLayout>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: '2.2rem', letterSpacing: '0.04em', color: 'var(--color-text-primary)', lineHeight: 1 }}>LEDGER</h1>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '3px' }}>{monthStr}</p>
+        </div>
+        <button onClick={() => { setShowAdd(s => !s); setActiveTab('overview') }} style={{ padding: '8px 14px', background: Y, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.85rem', letterSpacing: '0.06em', color: '#0A0A0F' }}>+ LOG</button>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(255,255,255,0.06)' }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id as any)} style={{
-            flex: 1, padding: '8px 12px', borderRadius: '9px', border: 'none', cursor: 'pointer',
-            background: activeTab === t.id ? 'rgba(59,130,246,0.15)' : 'transparent',
-            color: activeTab === t.id ? 'var(--color-accent)' : 'var(--color-text-muted)',
-            fontFamily: 'var(--font-ui)', fontSize: '0.8rem', fontWeight: 600,
-            transition: 'all 200ms',
-            boxShadow: activeTab === t.id ? '0 0 12px rgba(59,130,246,0.15)' : 'none',
-          }}>{t.label}</button>
+      <div style={{ display: 'flex', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)' }}>
+        {(['overview', 'transactions', 'budget'] as const).map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '8px 14px', background: 'none', border: 'none', borderBottom: activeTab === t ? '2px solid ' + Y : '2px solid transparent', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.7rem', letterSpacing: '0.08em', color: activeTab === t ? Y : 'var(--color-text-muted)', marginBottom: '-1px', transition: 'color 150ms, border-color 150ms', textTransform: 'uppercase' }}>
+            {t}
+          </button>
         ))}
       </div>
 
-      {/* Overview tab */}
-      {activeTab === 'overview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Area chart */}
-          <div className="glass-card" style={{ padding: '20px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '16px' }}>Monthly Cash Flow</div>
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={areaData}>
-                <defs>
-                  <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `৳${(v/1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="income" name="Income" stroke="#10B981" strokeWidth={2} fill="url(#incomeGrad)" />
-                <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#F43F5E" strokeWidth={2} fill="url(#expenseGrad)" />
-              </AreaChart>
+      {/* Add form — always visible when open */}
+      {showAdd && (
+        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.08em', marginBottom: '12px' }}>{quickCat ? 'QUICK LOG - ' + quickCat.toUpperCase() : 'NEW TRANSACTION'}</div>
+          {addSuccess && <div style={{ marginBottom: '10px', padding: '8px 12px', borderRadius: 'var(--radius-md)', background: 'rgba(0,229,160,0.1)', border: '1px solid ' + MINT, color: MINT, fontFamily: 'var(--font-body)', fontSize: '0.8rem' }}>Transaction added</div>}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+            {['expense', 'income'].map(t => (
+              <button key={t} onClick={() => setForm(f => ({ ...f, type: t }))} style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: '1px solid ' + (form.type === t ? (t === 'income' ? MINT : RED) : 'var(--color-border)'), background: form.type === t ? (t === 'income' ? MINT + '12' : RED + '12') : 'transparent', color: form.type === t ? (t === 'income' ? MINT : RED) : 'var(--color-text-muted)', fontFamily: 'var(--font-head)', fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{t}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[{ key: 'amount', placeholder: 'Amount (BDT)', type: 'number' }, { key: 'description', placeholder: 'Description', type: 'text' }, { key: 'date', placeholder: 'Date', type: 'date' }].map(({ key, placeholder, type }) => (
+              <input key={key} type={type} placeholder={placeholder} value={(form as any)[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} className="input-field" />
+            ))}
+            {cats.length > 0 && <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="input-field" style={{ cursor: 'pointer' }}><option value="">Category (optional)</option>{cats.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => { if (form.amount && form.description) createTxMutation.mutate(form) }} disabled={!form.amount || !form.description || createTxMutation.isPending} style={{ flex: 1, padding: '10px', background: Y, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.8rem', color: '#0A0A0F', opacity: (!form.amount || !form.description || createTxMutation.isPending) ? 0.5 : 1 }}>{createTxMutation.isPending ? 'ADDING...' : 'ADD ' + form.type.toUpperCase()}</button>
+              <button onClick={() => { setShowAdd(false); setQuickCat(null) }} style={{ padding: '10px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', fontSize: '0.8rem' }}>X</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OVERVIEW TAB */}
+      {activeTab === 'overview' && (<>
+        {/* Balance hero */}
+        <div style={{ background: 'linear-gradient(180deg, var(--color-surface-2) 0%, var(--glass-bg) 100%)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '0.7rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em' }}>TOTAL BALANCE</span>
+            <button onClick={() => setBalanceVisible(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontFamily: 'var(--font-head)', fontSize: '0.65rem', letterSpacing: '0.06em' }}>{balanceVisible ? 'HIDE' : 'SHOW'}</button>
+          </div>
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '1.4rem', color: Y, marginBottom: '14px' }}>{balanceVisible ? 'BDT ' + balance.toLocaleString() : 'BDT ......'}</div>
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
+            <div><div style={{ fontFamily: 'var(--font-head)', fontSize: '0.6rem', color: 'var(--color-text-muted)', letterSpacing: '0.08em', marginBottom: '3px' }}>INCOME</div><div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.8rem', color: MINT }}>BDT {income.toLocaleString()}</div></div>
+            <div><div style={{ fontFamily: 'var(--font-head)', fontSize: '0.6rem', color: 'var(--color-text-muted)', letterSpacing: '0.08em', marginBottom: '3px' }}>SPENT</div><div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.8rem', color: RED }}>BDT {expenses.toLocaleString()}</div></div>
+          </div>
+          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: burnOk ? MINT : RED, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Month burn rate: <span style={{ color: burnOk ? MINT : RED }}>{burnOk ? 'on track' : 'over budget'}</span></span>
+          </div>
+        </div>
+
+        {/* Monthly bar chart */}
+        {chartData.length > 0 && (
+          <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '14px' }}>MONTHLY INCOME vs EXPENSES</div>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={chartData} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontFamily: 'var(--font-body)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => (v/1000).toFixed(0) + 'k'} />
+                <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
+                <Bar dataKey="income" name="Income" fill={MINT} radius={[2,2,0,0]} fillOpacity={0.85} />
+                <Bar dataKey="expenses" name="Expenses" fill={RED} radius={[2,2,0,0]} fillOpacity={0.85} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '8px', height: '8px', borderRadius: '1px', background: MINT }} /><span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Income</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><div style={{ width: '8px', height: '8px', borderRadius: '1px', background: RED }} /><span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Expenses</span></div>
+            </div>
+          </div>
+        )}
+
+        {/* Expense breakdown pie chart */}
+        {pieData.length > 0 && (
+          <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '14px' }}>WHERE YOU SPEND MOST</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                  {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
+                <Legend iconType="circle" iconSize={8} formatter={(value: string) => <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{value}</span>} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
+        )}
 
-          {/* Donut + bar side by side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div className="glass-card" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>By Category</div>
-              {donutData.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={120}>
-                    <PieChart>
-                      <Pie data={donutData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value">
-                        {donutData.map((d: any, i: number) => <Cell key={i} fill={d.color} stroke="rgba(8,10,15,0.8)" strokeWidth={2} />)}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-                    {donutData.slice(0, 3).map((d: any) => (
-                      <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: d.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                        <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>৳{Number(d.value).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '20px 0' }}>No data</p>}
+        {/* Anomaly */}
+        {anomaly && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderLeft: '3px solid ' + RED, borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}><span style={{ color: '#F59E0B' }}>!</span><span style={{ fontFamily: 'var(--font-head)', fontSize: '0.72rem', color: '#F59E0B', letterSpacing: '0.06em' }}>ANOMALY DETECTED</span></div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Unusual spending in {anomaly.name} this week.</div>
             </div>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>REVIEW</span>
+          </div>
+        )}
 
-            <div className="glass-card" style={{ padding: '16px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Monthly Bars</div>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={areaData} barCategoryGap="35%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="income" name="Income" fill="#10B981" radius={[4,4,0,0]} fillOpacity={0.85} />
-                  <Bar dataKey="expenses" name="Expenses" fill="#F43F5E" radius={[4,4,0,0]} fillOpacity={0.85} />
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Spending overview */}
+        {cats.filter((c: any) => c.budget_limit).length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.8rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '12px' }}>SPENDING OVERVIEW</div>
+            <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+              {cats.filter((c: any) => c.budget_limit).map((c: any) => {
+                const spent = transactions.filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
+                return <CategoryBar key={c.id} name={c.name} spent={spent} budget={Number(c.budget_limit)} color={CAT_COLORS[c.name] || Y} />
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Quick log */}
+        <div style={{ marginBottom: '8px' }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.7rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '8px' }}>QUICK LOG</div>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+            {['FOOD', 'TRANSPORT', 'EDUCATION', 'OTHER'].map(cat => (
+              <button key={cat} onClick={() => openQuickLog(cat)} style={{ flex: '0 0 auto', padding: '8px 14px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>{cat}</button>
+            ))}
+          </div>
+        </div>
+      </>)}
+
+      {/* TRANSACTIONS TAB */}
+      {activeTab === 'transactions' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '0.8rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em' }}>ALL TRANSACTIONS</span>
+            <a href={import.meta.env.VITE_API_URL + '/api/v1/ledger/export'} download style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: Y, textDecoration: 'none' }}><DownloadIcon size={12} /> Export</a>
+          </div>
+          <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            {transactions.length === 0 ? <EmptyTrainer /> : transactions.map((tx: any, i: number) => {
+              const isIncome = tx.type === 'income'
+              const catColor = CAT_COLORS[tx.categoryName] || MUTED
+              const initial = (tx.categoryName || '?')[0].toUpperCase()
+              return (
+                <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', borderBottom: i < transactions.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-md)', flexShrink: 0, background: 'var(--color-surface-2)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-head)', fontSize: '0.85rem', color: catColor }}>{initial}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description || tx.categoryName}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>{tx.categoryName} - {tx.date}</div>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.65rem', color: isIncome ? MINT : RED, flexShrink: 0 }}>{isIncome ? '+' : '-'}BDT {Number(tx.amount).toLocaleString()}</div>
+                  <button onClick={() => deleteTxMutation.mutate(tx.id)} className="btn-danger-hover"><TrashIcon size={12} /></button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* BUDGET TAB */}
+      {activeTab === 'budget' && (
+        <div>
+          <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.8rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', marginBottom: '14px' }}>MANAGE CATEGORIES</div>
+          {catMsg && <div style={{ marginBottom: '12px', padding: '8px 12px', borderRadius: 'var(--radius-md)', background: 'rgba(0,229,160,0.1)', border: '1px solid ' + MINT, color: MINT, fontFamily: 'var(--font-body)', fontSize: '0.8rem' }}>{catMsg}</div>}
+
+          {/* Add category form */}
+          <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.7rem', color: Y, letterSpacing: '0.08em', marginBottom: '10px' }}>+ NEW CATEGORY</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input placeholder="Category name" value={catForm.name} onChange={e => setCatForm(f => ({ ...f, name: e.target.value }))} className="input-field" />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                  <label style={{ fontFamily: 'var(--font-head)', fontSize: '0.65rem', color: 'var(--color-text-muted)', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>COLOR</label>
+                  <input type="color" value={catForm.color} onChange={e => setCatForm(f => ({ ...f, color: e.target.value }))} style={{ width: '36px', height: '32px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'none', padding: '2px' }} />
+                </div>
+                <input placeholder="Budget limit (BDT, optional)" type="number" value={catForm.budget_limit} onChange={e => setCatForm(f => ({ ...f, budget_limit: e.target.value }))} className="input-field" style={{ flex: 2 }} />
+              </div>
+              <button onClick={() => { if (catForm.name) createCatMutation.mutate() }} disabled={!catForm.name || createCatMutation.isPending} style={{ padding: '9px', background: Y, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: '#0A0A0F', opacity: !catForm.name ? 0.5 : 1 }}>
+                {createCatMutation.isPending ? 'CREATING...' : 'CREATE CATEGORY'}
+              </button>
             </div>
           </div>
 
-          {/* Budget limits */}
-          {cats.filter((c: any) => c.budget_limit).length > 0 && (
-            <div className="glass-card" style={{ padding: '20px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '16px' }}>Budget Limits</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {cats.filter((c: any) => c.budget_limit).map((c: any, i: number) => {
-                  const spent = (txData?.items || []).filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
-                  const pct = Math.min((spent / Number(c.budget_limit)) * 100, 100)
-                  const isOver = pct >= 100
-                  const isWarn = pct >= 80 && !isOver
-                  const barColor = isOver ? '#F43F5E' : isWarn ? '#F59E0B' : COLORS[i % COLORS.length]
-                  return (
-                    <div key={c.id}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{c.name}</span>
-                        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: isOver ? '#F43F5E' : 'var(--color-text-muted)' }}>
-                          ৳{spent.toLocaleString()} / ৳{Number(c.budget_limit).toLocaleString()}
-                        </span>
+          {/* Existing categories */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {cats.map((c: any) => {
+              const spent = transactions.filter((t: any) => t.category_id === c.id && t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0)
+              const isEditing = editCat?.id === c.id
+              return (
+                <div key={c.id} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderLeft: '3px solid ' + (c.color || Y), borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <input value={editCat.name} onChange={e => setEditCat((p: any) => ({ ...p, name: e.target.value }))} className="input-field" placeholder="Name" />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input type="color" value={editCat.color || 'var(--color-accent)'} onChange={e => setEditCat((p: any) => ({ ...p, color: e.target.value }))} style={{ width: '36px', height: '32px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'none', padding: '2px' }} />
+                        <input type="number" value={editCat.budget_limit || ''} onChange={e => setEditCat((p: any) => ({ ...p, budget_limit: e.target.value }))} className="input-field" placeholder="Budget limit (BDT)" style={{ flex: 1 }} />
                       </div>
-                      <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: '2px', transition: 'width 600ms ease-out', boxShadow: `0 0 8px ${barColor}60` }} />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => updateCatMutation.mutate({ id: c.id, data: { name: editCat.name, color: editCat.color, budget_limit: editCat.budget_limit ? Number(editCat.budget_limit) : null } })} style={{ flex: 1, padding: '8px', background: Y, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.7rem', color: '#0A0A0F' }}>SAVE</button>
+                        <button onClick={() => setEditCat(null)} style={{ padding: '8px 12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', fontSize: '0.8rem' }}>X</button>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Transactions tab */}
-      {activeTab === 'transactions' && (
-        <div className="glass-card" style={{ overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>All Transactions</span>
-            <a href={`${import.meta.env.VITE_API_URL}/api/v1/ledger/export`} download style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', textDecoration: 'none', fontWeight: 500 }}>
-              <DownloadIcon size={13} /> Export CSV
-            </a>
-          </div>
-          {transactions.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>No transactions yet</div>
-          ) : (
-            transactions.map((tx: any, i: number) => (
-              <div key={tx.id} style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
-                borderBottom: i < transactions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                background: tx.type === 'income' ? 'rgba(16,185,129,0.03)' : 'rgba(244,63,94,0.03)',
-              }}>
-                <div style={{
-                  width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                  background: tx.type === 'income' ? '#10B981' : '#F43F5E',
-                  boxShadow: `0 0 6px ${tx.type === 'income' ? '#10B98160' : '#F43F5E60'}`,
-                }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-primary)', marginBottom: '2px' }}>{tx.description || tx.categoryName}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{tx.categoryName} · {tx.date}</div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: c.color || Y, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.85rem', letterSpacing: '0.02em', color: 'var(--color-text-primary)' }}>{c.name}</div>
+                        <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                          Spent: BDT {spent.toLocaleString()}{c.budget_limit ? ' / Budget: BDT ' + Number(c.budget_limit).toLocaleString() : ' (no budget)'}
+                        </div>
+                      </div>
+                      <button onClick={() => setEditCat({ id: c.id, name: c.name, color: c.color || 'var(--color-accent)', budget_limit: c.budget_limit || '' })} style={{ padding: '5px 10px', background: 'var(--color-surface-2)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-head)', fontSize: '0.6rem', letterSpacing: '0.06em', color: Y }}>EDIT</button>
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 700, color: tx.type === 'income' ? '#10B981' : '#F43F5E' }}>
-                  {tx.type === 'income' ? '+' : '-'}৳{Number(tx.amount).toLocaleString()}
-                </div>
-                <button onClick={() => deleteMutation.mutate(tx.id)} className="btn-danger-hover" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
-                  <TrashIcon size={14} />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Add tab */}
-      {activeTab === 'add' && (
-        <div className="glass-card" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px' }}>New Transaction</div>
-
-          {addSuccess && (
-            <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#10B981', fontSize: '0.85rem', fontWeight: 500 }}>
-              ✓ Transaction added successfully
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {/* Type toggle */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {['expense', 'income'].map(t => (
-                <button key={t} onClick={() => setForm(f => ({ ...f, type: t }))} style={{
-                  flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid',
-                  borderColor: form.type === t ? (t === 'income' ? '#10B981' : '#F43F5E') : 'rgba(255,255,255,0.08)',
-                  background: form.type === t ? (t === 'income' ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)') : 'rgba(255,255,255,0.03)',
-                  color: form.type === t ? (t === 'income' ? '#10B981' : '#F43F5E') : 'var(--color-text-muted)',
-                  cursor: 'pointer', fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: '0.875rem', textTransform: 'capitalize',
-                  transition: 'all 200ms',
-                }}>{t}</button>
-              ))}
-            </div>
-            {[
-              { key: 'amount', placeholder: 'Amount (৳)', type: 'number' },
-              { key: 'description', placeholder: 'Description', type: 'text' },
-              { key: 'date', placeholder: 'Date', type: 'date' },
-            ].map(({ key, placeholder, type }) => (
-              <input key={key} type={type} placeholder={placeholder} value={(form as any)[key]}
-                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                style={{ width: '100%', padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' as any }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)' }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
-              />
-            ))}
-            {/* Category select */}
-            {cats.length > 0 && (
-              <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                style={{ width: '100%', padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: form.category_id ? 'var(--color-text-primary)' : 'var(--color-text-muted)', fontFamily: 'var(--font-ui)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' as any, cursor: 'pointer' }}>
-                <option value="">Category (optional)</option>
-                {cats.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            )}
-            <button
-              onClick={() => { if (form.amount && form.description) createTxMutation.mutate(form) }}
-              disabled={!form.amount || !form.description || createTxMutation.isPending}
-              style={{ padding: '12px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6, #2563EB)', border: 'none', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)', transition: 'transform 150ms, opacity 150ms', opacity: (!form.amount || !form.description || createTxMutation.isPending) ? 0.5 : 1 }}
-              onMouseEnter={e => { if (!createTxMutation.isPending) e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              {createTxMutation.isPending ? 'Adding…' : `Add ${form.type}`}
-            </button>
+              )
+            })}
           </div>
         </div>
       )}

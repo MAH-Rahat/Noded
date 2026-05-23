@@ -6,16 +6,11 @@ import uuid
 
 class NoteCreate(BaseModel):
     title: str
-    body: str
+    body: str = ""
     tag_label: Optional[str] = None
     tag_color: Optional[str] = None
-
-    @field_validator("body")
-    @classmethod
-    def body_not_empty(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Note body cannot be empty")
-        return v
+    category: Optional[str] = None
+    locked: bool = False
 
 
 class NoteUpdate(BaseModel):
@@ -24,6 +19,8 @@ class NoteUpdate(BaseModel):
     tag_label: Optional[str] = None
     tag_color: Optional[str] = None
     pinned: Optional[bool] = None
+    locked: Optional[bool] = None
+    category: Optional[str] = None
 
 
 class NoteResponse(BaseModel):
@@ -35,5 +32,7 @@ class NoteResponse(BaseModel):
     tag_label: Optional[str] = None
     tag_color: Optional[str] = None
     pinned: bool
+    locked: bool = False
+    category: Optional[str] = None
     created_at: datetime
     updated_at: datetime

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import select, func
@@ -27,9 +28,17 @@ async def get_note(db: AsyncSession, user_id: uuid.UUID, note_id: uuid.UUID) -> 
 
 
 async def create_note(db: AsyncSession, user_id: uuid.UUID, body: NoteCreate) -> Note:
-    note = Note(id=uuid.uuid4(), user_id=user_id, **body.model_dump())
+    now = datetime.now(timezone.utc)
+    note = Note(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        created_at=now,
+        updated_at=now,
+        **body.model_dump()
+    )
     db.add(note)
     await db.flush()
+    await db.refresh(note)
     return note
 
 
@@ -58,7 +67,12 @@ async def update_note(
 
     for field, value in updates.items():
         setattr(note, field, value)
+
+    # Manually set updated_at — onupdate doesn't fire before commit in async sessions
+    note.updated_at = datetime.now(timezone.utc)
+
     await db.flush()
+    await db.refresh(note)
     return note
 
 

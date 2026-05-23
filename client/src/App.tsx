@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, useQuery } from '@tanstack/react-query'
 import queryClient from './lib/queryClient'
 import { AuthGuard } from './components/layout/AuthGuard'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
 import { SearchOverlay } from './components/overlays/SearchOverlay'
 import { OnboardingOverlay } from './components/overlays/OnboardingOverlay'
+import { usePokemonTheme } from './hooks/usePokemonTheme'
+import { IS_PREVIEW, MOCK_SUMMARY, MOCK_TASKS, MOCK_HISTORY } from './lib/mockData'
+import api from './lib/api'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetRequestPage from './pages/ResetRequestPage'
@@ -33,6 +36,49 @@ function OnlineWatcher() {
   return null
 }
 
+// Runs the pokemon theme hook globally so accent color applies on every page
+function GlobalPokemonTheme() {
+  const token = useAuthStore((s) => s.token)
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data: summary } = useQuery({
+    queryKey: ['ledger', 'summary'],
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_SUMMARY) : api.get('/api/v1/ledger/summary').then(r => r.data.data),
+    enabled: !!token || IS_PREVIEW,
+    staleTime: 1000 * 60 * 5,
+  })
+  const { data: tasks = [] } = useQuery<any[]>({
+    queryKey: ['tasks', today],
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TASKS) : api.get(`/api/v1/tasks?date=${today}`).then(r => r.data.data),
+    enabled: !!token || IS_PREVIEW,
+    staleTime: 1000 * 60 * 5,
+  })
+  const { data: history = {} } = useQuery<Record<string, boolean>>({
+    queryKey: ['tasks', 'history'],
+    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_HISTORY) : api.get('/api/v1/tasks/history').then(r => r.data.data),
+    enabled: !!token || IS_PREVIEW,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const completedToday = tasks.filter((t: any) => t.state === 'completed').length
+  const totalToday = tasks.length
+  const taskPct = totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0
+  const savingsRate = summary && summary.total_income > 0
+    ? Math.round(((summary.total_income - summary.total_expenses) / summary.total_income) * 100)
+    : 20
+  const streak = useMemo(() => {
+    let count = 0; const d = new Date()
+    for (let i = 0; i < 30; i++) {
+      const key = d.toISOString().split('T')[0]
+      if ((history as any)[key]) { count++; d.setDate(d.getDate() - 1) } else break
+    }
+    return count
+  }, [history])
+
+  usePokemonTheme({ taskPct, savingsRate, streak })
+  return null
+}
+
 function Protected({ children }: { children: React.ReactNode }) {
   return <AuthGuard>{children}</AuthGuard>
 }
@@ -56,6 +102,7 @@ function AppShell() {
   return (
     <>
       <OnlineWatcher />
+      <GlobalPokemonTheme />
       <SearchOverlay />
       {showOnboarding && (
         <OnboardingOverlay onComplete={() => setShowOnboarding(false)} />

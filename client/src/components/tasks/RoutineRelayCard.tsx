@@ -61,6 +61,7 @@ export function RoutineRelayCard() {
   const qc = useQueryClient()
   const { toggle } = useTaskStateMachine()
   const [newTitle, setNewTitle] = useState('')
+  const [writeError, setWriteError] = useState<string | null>(null)
   const sensors = useSensors(useSensor(PointerSensor))
 
   const today = new Date().toISOString().split('T')[0]
@@ -86,24 +87,28 @@ export function RoutineRelayCard() {
       )
       return { prev }
     },
-    onError: (_err, _vars, ctx) => {
+    onError: (err: Error, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['tasks', today], ctx.prev)
+      if (err.message === 'OFFLINE') setWriteError('Unavailable offline')
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['tasks', today] }),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/tasks/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', today] }),
+    onSuccess: () => { setWriteError(null); qc.invalidateQueries({ queryKey: ['tasks', today] }) },
+    onError: (err: Error) => { if (err.message === 'OFFLINE') setWriteError('Unavailable offline') },
   })
 
   const createMutation = useMutation({
     mutationFn: (title: string) =>
       api.post('/api/v1/tasks', { title, date: today }),
     onSuccess: () => {
+      setWriteError(null)
       qc.invalidateQueries({ queryKey: ['tasks', today] })
       setNewTitle('')
     },
+    onError: (err: Error) => { if (err.message === 'OFFLINE') setWriteError('Unavailable offline') },
   })
 
   const reorderMutation = useMutation({
@@ -146,6 +151,9 @@ export function RoutineRelayCard() {
 
   return (
     <ModuleCard title="Routine & Relay">
+      {writeError && (
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)', marginBottom: '8px' }}>{writeError}</div>
+      )}
       {isLoading ? (
         <SkeletonBlock lines={4} />
       ) : (

@@ -69,6 +69,20 @@
   --nav-bg:               rgba(240,244,255,0.92);
 }
 
+/* In light mode, ensure accent colors have enough contrast.
+   JS sets --color-accent from pokemon type; we darken it via filter on elements
+   that need contrast against white backgrounds. */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .nav-item.active,
+[data-theme="light"] .level-bar-fill {
+  filter: brightness(0.75) saturate(1.2);
+}
+[data-theme="light"] .poke-type-badge {
+  filter: brightness(0.7) saturate(1.3);
+}
+/* Ensure text on accent backgrounds stays readable */
+[data-theme="light"] .btn-primary { color: #fff !important; }
+
 /* ─── Accent tokens (set by Pokémon theme JS) ──────────────────────────────── */
 :root {
   --color-accent:       #6390F0;
@@ -283,7 +297,7 @@ a .glass-card:hover,
 /* ─── BottomNav ────────────────────────────────────────────────────────────── */
 .bottom-nav {
   position: fixed;
-  bottom: 24px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-nav);

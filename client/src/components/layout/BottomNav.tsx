@@ -17,13 +17,8 @@ export function BottomNav() {
         const isActive = location.pathname === to
         return (
           <NavLink key={to} to={to} className={`nav-item${isActive ? ' active' : ''}`}>
-            <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
-            <span style={{
-              fontSize: '0.48rem',
-              fontFamily: 'var(--font-head)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}>
+            <Icon size={17} strokeWidth={isActive ? 2 : 1.5} />
+            <span style={{ fontSize: '0.45rem', fontFamily: 'var(--font-head)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {label}
             </span>
           </NavLink>

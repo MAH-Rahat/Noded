@@ -20,6 +20,7 @@ interface Note {
 export function CanvasCard() {
   const qc = useQueryClient()
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [writeError, setWriteError] = useState<string | null>(null)
 
   const { data: notes = [], isLoading } = useQuery<Note[]>({
     queryKey: ['notes'],
@@ -29,20 +30,24 @@ export function CanvasCard() {
   const createMutation = useMutation({
     mutationFn: () => api.post('/api/v1/notes', { title: 'New Note', body: ' ' }),
     onSuccess: (res) => {
+      setWriteError(null)
       qc.invalidateQueries({ queryKey: ['notes'] })
       setEditingId(res.data.data.id)
     },
+    onError: (err: Error) => { if (err.message === 'OFFLINE') setWriteError('Unavailable offline') },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/notes/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+    onSuccess: () => { setWriteError(null); qc.invalidateQueries({ queryKey: ['notes'] }) },
+    onError: (err: Error) => { if (err.message === 'OFFLINE') setWriteError('Unavailable offline') },
   })
 
   const pinMutation = useMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
       api.patch(`/api/v1/notes/${id}`, { pinned }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+    onSuccess: () => { setWriteError(null); qc.invalidateQueries({ queryKey: ['notes'] }) },
+    onError: (err: Error) => { if (err.message === 'OFFLINE') setWriteError('Unavailable offline') },
   })
 
   const pinnedCount = notes.filter((n) => n.pinned).length
@@ -98,6 +103,9 @@ export function CanvasCard() {
         </div>
       }
     >
+      {writeError && (
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)', marginBottom: '8px' }}>{writeError}</div>
+      )}
       {isLoading ? (
         <SkeletonBlock lines={4} />
       ) : notes.length === 0 ? (

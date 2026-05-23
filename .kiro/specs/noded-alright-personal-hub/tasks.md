@@ -188,7 +188,7 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Test reorder bulk update persists correct sort_order values
     - _Requirements: 3.7, 3.8, 3.9, 3.10_
 
-- [ ] 6. Canvas module
+- [x] 6. Canvas module
   - [x] 6.1 Implement Notes API
     - Implement `api/app/routers/notes.py` and `api/app/services/note_service.py`
     - `GET /api/v1/notes`: list all notes, pinned first, requires auth
@@ -299,7 +299,7 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Display due time (clock icon + formatted time) on task rows where `due_time` is set
     - _Requirements: 11.1, 11.5, 11.7_
 
-- [ ] 13. Onboarding flow
+- [x] 13. Onboarding flow
   - [x] 13.1 Implement onboarding completion API
     - Add `PATCH /api/v1/settings/preferences` to also accept `onboarding_completed: bool` and persist to `users.onboarding_completed`
     - Return `onboarding_completed` in the profile response so the frontend can gate the overlay
@@ -315,32 +315,32 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Accent_Color highlights on active step indicators and CTA elements; dark background `#0F1115`/`#1A1C23`
     - _Requirements: 12.1–12.6_
 
-- [-] 14. PWA configuration
+- [x] 14. PWA configuration
   - [x] 14.1 Configure vite-plugin-pwa and service worker
     - Update `web/vite.config.ts` with full `vite-plugin-pwa` config: manifest (name, short_name, icons 192/512/maskable, theme_color `#0F1115`, background_color `#0F1115`, `display: standalone`, `start_url: /`)
     - Configure Workbox strategies: CacheFirst for App Shell (HTML, JS, CSS, fonts, icons); NetworkFirst with 3s timeout for API requests; CacheFirst with long TTL for images
     - Add PWA icons to `web/public/icons/` (192×192, 512×512, 512×512 maskable)
     - _Requirements: 13.1–13.3, 13.7_
 
-  - [ ] 14.2 Implement offline indicator and offline write guard
+  - [x] 14.2 Implement offline indicator and offline write guard
     - Add `<OfflineBadge>` to `<GlobalStatsBar>`: grey dot + "Offline" label, shown when `navigator.onLine === false`; listen to `online`/`offline` window events
     - In API layer (`web/src/lib/api.ts`): when `navigator.onLine === false` and request is a write (POST/PATCH/DELETE), reject with a synthetic offline error before sending
     - Display "unavailable offline" message in the relevant module card when a write is blocked
     - _Requirements: 13.4–13.6_
 
-- [ ] 15. Deployment configuration
-  - [ ] 15.1 Create Render deployment config for `api/`
+- [x] 15. Deployment configuration
+  - [x] 15.1 Create Render deployment config for `api/`
     - Create `api/render.yaml` with service definition: `type: web`, `runtime: python`, `buildCommand: pip install -r requirements.txt && alembic upgrade head`, `startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT`
     - Define environment variables: `DATABASE_URL` (from managed DB), `JWT_SECRET` (generated), `VAULT_ENCRYPTION_KEY` (sync: false), `VAPID_PRIVATE_KEY` (sync: false), `VAPID_PUBLIC_KEY` (sync: false), `FRONTEND_URL` (sync: false)
     - Define managed PostgreSQL database: `noded-alright-db`
     - _Requirements: design §3.2_
 
-  - [ ] 15.2 Create Vercel deployment config for `web/`
+  - [x] 15.2 Create Vercel deployment config for `web/`
     - Create `client/vercel.json` with `rewrites` rule to serve `index.html` for all non-asset paths (SPA fallback)
     - Document in `README.md`: set Vercel "Root Directory" to `client`; set `VITE_API_URL` environment variable to the Render service URL
     - _Requirements: design §1.1, §1.2_
 
-- [ ] 16. Final checkpoint
+- [x] 16. Final checkpoint
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

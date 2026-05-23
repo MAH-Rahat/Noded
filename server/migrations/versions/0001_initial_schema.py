@@ -52,13 +52,13 @@ def upgrade() -> None:
         sa.Column("vault_pin_hash", sa.String(255), nullable=True),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
         sa.Column(
             "updated_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -84,7 +84,7 @@ def upgrade() -> None:
         sa.Column("budget_limit", sa.Numeric(12, 2), nullable=True),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -119,7 +119,7 @@ def upgrade() -> None:
             nullable=False,
             server_default="0",
         ),
-        sa.Column("due_time", postgresql.TIMESTAMPTZ, nullable=True),
+        sa.Column("due_time", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column(
             "notified",
             sa.Boolean,
@@ -128,13 +128,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
         sa.Column(
             "updated_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -167,13 +167,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
         sa.Column(
             "updated_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -206,13 +206,13 @@ def upgrade() -> None:
         sa.Column("description", sa.String(500), nullable=True),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
         sa.Column(
             "updated_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -239,13 +239,13 @@ def upgrade() -> None:
         sa.Column("category_label", sa.String(100), nullable=True),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
         sa.Column(
             "updated_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -267,10 +267,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("session_token", sa.String(255), unique=True, nullable=False),
-        sa.Column("expires_at", postgresql.TIMESTAMPTZ, nullable=False),
+        sa.Column("expires_at", sa.TIMESTAMP(timezone=True), nullable=False),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -298,7 +298,7 @@ def upgrade() -> None:
             nullable=False,
             server_default="0",
         ),
-        sa.Column("locked_until", postgresql.TIMESTAMPTZ, nullable=True),
+        sa.Column("locked_until", sa.TIMESTAMP(timezone=True), nullable=True),
     )
 
     # 9. token_blocklist
@@ -311,10 +311,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("jti", sa.String(255), unique=True, nullable=False),
-        sa.Column("expires_at", postgresql.TIMESTAMPTZ, nullable=False),
+        sa.Column("expires_at", sa.TIMESTAMP(timezone=True), nullable=False),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -336,7 +336,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("token_hash", sa.String(255), unique=True, nullable=False),
-        sa.Column("expires_at", postgresql.TIMESTAMPTZ, nullable=False),
+        sa.Column("expires_at", sa.TIMESTAMP(timezone=True), nullable=False),
         sa.Column(
             "used",
             sa.Boolean,
@@ -345,7 +345,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),
@@ -371,7 +371,7 @@ def upgrade() -> None:
         sa.Column("auth", sa.Text, nullable=False),
         sa.Column(
             "created_at",
-            postgresql.TIMESTAMPTZ,
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),

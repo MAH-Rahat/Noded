@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import ForeignKey, Integer
-from sqlalchemy.dialects.postgresql import TIMESTAMPTZ, UUID
+from sqlalchemy import ForeignKey, Integer, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database import Base
@@ -22,4 +22,4 @@ class VaultLockout(Base):
     failed_attempts: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default="0"
     )
-    locked_until: Mapped[str | None] = mapped_column(TIMESTAMPTZ, nullable=True)
+    locked_until: Mapped[str | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)

@@ -9,8 +9,36 @@ from ..models.user import User
 from ..schemas.common import ResponseModel
 from ..schemas.vault import VaultAuthRequest, VaultAuthResponse, SnippetCreate, SnippetResponse
 from ..services import vault_service
+from ..services.auth_service import hash_password
 
 router = APIRouter(tags=["vault"])
+
+
+@router.get("/status", response_model=ResponseModel[dict])
+async def vault_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check if the user has set up a vault PIN."""
+    return ResponseModel.success({"setup": bool(current_user.vault_pin_hash)})
+
+
+@router.post("/setup", response_model=ResponseModel[dict])
+async def vault_setup(
+    body: VaultAuthRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Set the vault PIN for the first time."""
+    if current_user.vault_pin_hash:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Vault PIN already set")
+    from sqlalchemy import select
+    from ..models.user import User as UserModel
+    result = await db.execute(select(UserModel).where(UserModel.id == current_user.id))
+    user = result.scalar_one()
+    user.vault_pin_hash = hash_password(body.pin)
+    await db.flush()
+    return ResponseModel.success({"setup": True})
 
 
 @router.post("/authenticate", response_model=ResponseModel[VaultAuthResponse])

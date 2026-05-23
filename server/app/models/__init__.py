@@ -1,6 +1,6 @@
 from ..database import Base
 from .user import User
-from .task import Task
+from .task import Task, TaskList
 from .note import Note
 from .category import Category
 from .transaction import Transaction
@@ -12,7 +12,7 @@ from .password_reset_token import PasswordResetToken
 from .push_subscription import PushSubscription
 
 __all__ = [
-    "Base", "User", "Task", "Note", "Category", "Transaction",
+    "Base", "User", "Task", "TaskList", "Note", "Category", "Transaction",
     "Snippet", "VaultSession", "VaultLockout", "TokenBlocklist",
     "PasswordResetToken", "PushSubscription",
 ]

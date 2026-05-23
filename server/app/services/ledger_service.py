@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Optional
 import uuid
 
@@ -22,9 +22,11 @@ async def get_categories(db: AsyncSession, user_id: uuid.UUID) -> list[Category]
 
 
 async def create_category(db: AsyncSession, user_id: uuid.UUID, body: CategoryCreate) -> Category:
-    cat = Category(id=uuid.uuid4(), user_id=user_id, **body.model_dump())
+    now = datetime.now(timezone.utc)
+    cat = Category(id=uuid.uuid4(), user_id=user_id, created_at=now, **body.model_dump())
     db.add(cat)
     await db.flush()
+    await db.refresh(cat)
     return cat
 
 
@@ -40,6 +42,7 @@ async def update_category(
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(cat, field, value)
     await db.flush()
+    await db.refresh(cat)
     return cat
 
 
@@ -64,9 +67,11 @@ async def get_transactions(
 async def create_transaction(
     db: AsyncSession, user_id: uuid.UUID, body: TransactionCreate
 ) -> Transaction:
-    tx = Transaction(id=uuid.uuid4(), user_id=user_id, **body.model_dump())
+    now = datetime.now(timezone.utc)
+    tx = Transaction(id=uuid.uuid4(), user_id=user_id, created_at=now, updated_at=now, **body.model_dump())
     db.add(tx)
     await db.flush()
+    await db.refresh(tx)
     return tx
 
 

@@ -37,9 +37,15 @@ export function LedgerCard() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/ledger/transactions/${id}`),
     onSuccess: () => {
+      setWriteError(null)
       qc.invalidateQueries({ queryKey: ['ledger'] })
     },
+    onError: (err: Error) => {
+      if (err.message === 'OFFLINE') setWriteError('Unavailable offline')
+    },
   })
+
+  const [writeError, setWriteError] = React.useState<string | null>(null)
 
   const balance = useCountUp(summaryData ? Number(summaryData.total_balance) : 0)
   const income = useCountUp(summaryData ? Number(summaryData.total_income) : 0)
@@ -83,6 +89,9 @@ export function LedgerCard() {
 
   return (
     <ModuleCard title="The Ledger" headerAction={exportMenu}>
+      {writeError && (
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)', marginBottom: '8px' }}>{writeError}</div>
+      )}
       {isLoading ? (
         <SkeletonBlock lines={5} />
       ) : (

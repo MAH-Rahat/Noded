@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import ForeignKey, Numeric, String, func
-from sqlalchemy.dialects.postgresql import TIMESTAMPTZ, UUID
+from sqlalchemy import ForeignKey, Numeric, String, TIMESTAMP, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database import Base
@@ -24,5 +24,5 @@ class Category(Base):
         Numeric(12, 2), nullable=True
     )
     created_at: Mapped[str] = mapped_column(
-        TIMESTAMPTZ, nullable=False, server_default=func.now()
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
