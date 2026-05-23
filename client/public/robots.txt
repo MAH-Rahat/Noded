@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /ledger
+Disallow: /tasks
+Disallow: /canvas
+Disallow: /vault
+Disallow: /settings
+Allow: /login
+Allow: /register

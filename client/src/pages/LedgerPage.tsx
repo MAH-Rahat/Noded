@@ -30,6 +30,7 @@ export default function LedgerPage() {
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<'overview'|'transactions'|'add'>('overview')
   const [form, setForm] = useState({ amount: '', type: 'expense', description: '', date: new Date().toISOString().split('T')[0], category_id: '' })
+  const [addSuccess, setAddSuccess] = useState(false)
 
   const { data: summary } = useQuery({
     queryKey: ['ledger', 'summary'],
@@ -47,6 +48,23 @@ export default function LedgerPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/ledger/transactions/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['ledger'] }),
+  })
+
+  const createTxMutation = useMutation({
+    mutationFn: (data: typeof form) => api.post('/api/v1/ledger/transactions', {
+      amount: Number(data.amount),
+      type: data.type,
+      description: data.description,
+      date: data.date,
+      category_id: data.category_id || undefined,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ledger'] })
+      setForm({ amount: '', type: 'expense', description: '', date: new Date().toISOString().split('T')[0], category_id: '' })
+      setActiveTab('transactions')
+      setAddSuccess(true)
+      setTimeout(() => setAddSuccess(false), 2500)
+    },
   })
 
   const balance = useCountUp(summary ? Number(summary.total_balance) : 0)
@@ -239,10 +257,7 @@ export default function LedgerPage() {
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 700, color: tx.type === 'income' ? '#10B981' : '#F43F5E' }}>
                   {tx.type === 'income' ? '+' : '-'}৳{Number(tx.amount).toLocaleString()}
                 </div>
-                <button onClick={() => deleteMutation.mutate(tx.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#F43F5E'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
-                >
+                <button onClick={() => deleteMutation.mutate(tx.id)} className="btn-danger-hover" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
                   <TrashIcon size={14} />
                 </button>
               </div>
@@ -255,6 +270,13 @@ export default function LedgerPage() {
       {activeTab === 'add' && (
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px' }}>New Transaction</div>
+
+          {addSuccess && (
+            <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#10B981', fontSize: '0.85rem', fontWeight: 500 }}>
+              ✓ Transaction added successfully
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Type toggle */}
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -281,11 +303,22 @@ export default function LedgerPage() {
                 onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
               />
             ))}
-            <button style={{ padding: '12px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6, #2563EB)', border: 'none', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)', transition: 'transform 150ms' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            {/* Category select */}
+            {cats.length > 0 && (
+              <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                style={{ width: '100%', padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: form.category_id ? 'var(--color-text-primary)' : 'var(--color-text-muted)', fontFamily: 'var(--font-ui)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' as any, cursor: 'pointer' }}>
+                <option value="">Category (optional)</option>
+                {cats.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+            <button
+              onClick={() => { if (form.amount && form.description) createTxMutation.mutate(form) }}
+              disabled={!form.amount || !form.description || createTxMutation.isPending}
+              style={{ padding: '12px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6, #2563EB)', border: 'none', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.3)', transition: 'transform 150ms, opacity 150ms', opacity: (!form.amount || !form.description || createTxMutation.isPending) ? 0.5 : 1 }}
+              onMouseEnter={e => { if (!createTxMutation.isPending) e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
             >
-              Add {form.type}
+              {createTxMutation.isPending ? 'Adding…' : `Add ${form.type}`}
             </button>
           </div>
         </div>

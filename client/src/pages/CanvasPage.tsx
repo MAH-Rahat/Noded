@@ -105,10 +105,8 @@ export default function CanvasPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '10px' }}>
           {filtered.map(note => (
-            <div key={note.id} className="glass-card" style={{ padding: '14px', cursor: 'pointer', position: 'relative', transition: 'transform 150ms, box-shadow 150ms', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '140px' }}
+            <div key={note.id} className="glass-card hoverable" style={{ padding: '14px', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '140px' }}
               onClick={() => setEditingId(note.id)}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.2)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '' }}
             >
               {/* Tag accent bar */}
               {note.tag_color && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: note.tag_color, borderRadius: '20px 20px 0 0' }} />}
@@ -133,10 +131,7 @@ export default function CanvasPage() {
                   <button onClick={() => pinMutation.mutate({ id: note.id, pinned: !note.pinned })} style={{ background: 'none', border: 'none', cursor: 'pointer', color: note.pinned ? 'var(--color-accent)' : 'var(--color-text-muted)', padding: '2px', display: 'flex', alignItems: 'center' }}>
                     <PinIcon size={11} />
                   </button>
-                  <button onClick={() => deleteMutation.mutate(note.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '2px', display: 'flex', alignItems: 'center', transition: 'color 150ms' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#F43F5E'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
-                  >
+                  <button onClick={() => deleteMutation.mutate(note.id)} className="btn-danger-hover" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '2px', display: 'flex', alignItems: 'center' }}>
                     <TrashIcon size={11} />
                   </button>
                 </div>

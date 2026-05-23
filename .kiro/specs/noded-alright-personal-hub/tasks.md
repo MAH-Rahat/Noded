@@ -257,21 +257,21 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Wire search icon in `GlobalStatsBar` to open overlay
     - _Requirements: 9.1–9.8_
 
-- [ ] 10. Data export
-  - [ ] 10.1 Implement export endpoints
+- [x] 10. Data export
+  - [x] 10.1 Implement export endpoints
     - Implement `api/app/routers/export.py` and `api/app/services/export_service.py`
     - `GET /api/v1/notes/export`: package all user notes as individual `.md` files into a ZIP archive using `zipfile`; return as `application/zip` response
     - `GET /api/v1/ledger/export`: serialize all user transactions to CSV (date, amount, category, type, budget_limit); return as `text/csv` response
     - _Requirements: 10.2, 10.5, 14.7_
 
-  - [ ] 10.2 Implement Export_Menu in module card headers
+  - [x] 10.2 Implement Export_Menu in module card headers
     - Implement `<ExportMenu>` dropdown component in `web/src/components/ui/`
     - Add export menu to `CanvasCard` header and `LedgerCard` header
     - Show loading indicator on trigger during export request; show error message in card on failure; trigger browser file download on success
     - _Requirements: 10.1, 10.3, 10.4, 10.6, 10.7, 10.8_
 
-- [ ] 11. Settings page
-  - [ ] 11.1 Implement Settings API endpoints
+- [x] 11. Settings page
+  - [x] 11.1 Implement Settings API endpoints
     - Implement `api/app/routers/settings.py`
     - `GET /api/v1/settings/profile`: return user profile + accent_color + background_color + onboarding_completed + session login time + token expiry
     - `PATCH /api/v1/settings/profile`: validate and update display name and email; return HTTP 409 on duplicate email
@@ -279,33 +279,33 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - `PATCH /api/v1/settings/preferences`: persist accent_color and background_color to DB
     - _Requirements: 8.2–8.8, 8.13, 16.7_
 
-  - [ ] 11.2 Implement SettingsPage component
+  - [x] 11.2 Implement SettingsPage component
     - Implement `web/src/pages/SettingsPage.tsx`: editable display name and email fields; change-password section (current, new, confirm); client-side validation (new password ≥ 8 chars, passwords match)
     - Implement Accent_Color selector: three swatches (Electric Blue `#3B82F6`, Neon Green `#22C55E`, Violet Purple `#8B5CF6`); on select, update `--color-accent` CSS custom property on `:root` and persist via API
     - Implement background color toggle (`#000000` vs `#0F1115`); on select, update `--color-bg` CSS custom property and persist via API
     - Display current Notification_Permission state; display session login time and token expiry
     - _Requirements: 8.1–8.13, 11.6, 16.7_
 
-- [ ] 12. Notifications and reminders
-  - [ ] 12.1 Implement push subscription API and dispatcher job
+- [x] 12. Notifications and reminders
+  - [x] 12.1 Implement push subscription API and dispatcher job
     - Implement `api/app/routers/notifications.py`: `POST /api/v1/notifications/subscribe` (save push subscription), `DELETE /api/v1/notifications/subscribe` (remove subscription)
     - Implement `api/app/jobs/push_dispatcher.py`: poll every 60s for tasks where `due_time` is within the next 60s and `notified = false`; send push via `pywebpush` with VAPID keys; mark `notified = true`
     - Register dispatcher in `main.py` lifespan with APScheduler interval job
     - _Requirements: 11.3, 11.4, 11.8_
 
-  - [ ] 12.2 Implement push notification subscription on frontend
+  - [x] 12.2 Implement push notification subscription on frontend
     - On first login, call `Notification.requestPermission()` and store result in `uiStore`
     - If permission granted, call `PushManager.subscribe()` with VAPID public key and POST subscription to `/api/v1/notifications/subscribe`
     - Display due time (clock icon + formatted time) on task rows where `due_time` is set
     - _Requirements: 11.1, 11.5, 11.7_
 
 - [ ] 13. Onboarding flow
-  - [ ] 13.1 Implement onboarding completion API
+  - [x] 13.1 Implement onboarding completion API
     - Add `PATCH /api/v1/settings/preferences` to also accept `onboarding_completed: bool` and persist to `users.onboarding_completed`
     - Return `onboarding_completed` in the profile response so the frontend can gate the overlay
     - _Requirements: 12.4, 12.5_
 
-  - [ ] 13.2 Implement OnboardingOverlay component
+  - [x] 13.2 Implement OnboardingOverlay component
     - Implement `web/src/components/overlays/OnboardingOverlay.tsx`: 4-step modal portal rendered after registration when `onboarding_completed = false`
     - Step 1: Welcome screen with app name and tagline
     - Step 2: Module tour — highlight each BentoGrid card in sequence
@@ -315,8 +315,8 @@ Full-stack personal dashboard built as a FAR stack monorepo (`web/` React + Type
     - Accent_Color highlights on active step indicators and CTA elements; dark background `#0F1115`/`#1A1C23`
     - _Requirements: 12.1–12.6_
 
-- [ ] 14. PWA configuration
-  - [ ] 14.1 Configure vite-plugin-pwa and service worker
+- [-] 14. PWA configuration
+  - [x] 14.1 Configure vite-plugin-pwa and service worker
     - Update `web/vite.config.ts` with full `vite-plugin-pwa` config: manifest (name, short_name, icons 192/512/maskable, theme_color `#0F1115`, background_color `#0F1115`, `display: standalone`, `start_url: /`)
     - Configure Workbox strategies: CacheFirst for App Shell (HTML, JS, CSS, fonts, icons); NetworkFirst with 3s timeout for API requests; CacheFirst with long TTL for images
     - Add PWA icons to `web/public/icons/` (192×192, 512×512, 512×512 maskable)

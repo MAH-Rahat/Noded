@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageLayout } from '../components/layout/PageLayout'
 import { RadialProgressRing } from '../components/charts/RadialProgressRing'
 import { HeatmapCalendar } from '../components/tasks/HeatmapCalendar'
-import { StreakCounter } from '../components/tasks/StreakCounter'
 import { useTaskStateMachine } from '../hooks/useTaskStateMachine'
 import { PlusIcon, TrashIcon, ClockIcon, FlameIcon } from '../components/ui/Icons'
 import { IS_PREVIEW, MOCK_TASKS, MOCK_HISTORY } from '../lib/mockData'
@@ -15,24 +14,35 @@ export default function TasksPage() {
   const [newTitle, setNewTitle] = useState('')
   const today = new Date().toISOString().split('T')[0]
 
-  const { data: tasks = [] } = useQuery<any[]>({
+  // Local state for preview mode tasks (so toggle/add/delete work without a backend)
+  const [previewTasks, setPreviewTasks] = useState(MOCK_TASKS.map(t => ({ ...t })))
+
+  const { data: serverTasks = [] } = useQuery<any[]>({
     queryKey: ['tasks', today],
-    queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_TASKS) : api.get(`/api/v1/tasks?date=${today}`).then(r => r.data.data),
+    queryFn: () => api.get(`/api/v1/tasks?date=${today}`).then(r => r.data.data),
+    enabled: !IS_PREVIEW,
   })
   const { data: history = {} } = useQuery<Record<string, boolean>>({
     queryKey: ['tasks', 'history'],
     queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_HISTORY) : api.get('/api/v1/tasks/history').then(r => r.data.data),
   })
 
+  const tasks: any[] = IS_PREVIEW ? previewTasks : serverTasks
+
+  // ── Mutations (real backend) ──────────────────────────────────────────────
   const toggleMutation = useMutation({
-    mutationFn: ({ id, state }: { id: string; state: string }) => api.patch(`/api/v1/tasks/${id}`, { state }),
+    mutationFn: ({ id, state }: { id: string; state: string }) =>
+      api.patch(`/api/v1/tasks/${id}`, { state }),
     onMutate: async ({ id, state }) => {
       await qc.cancelQueries({ queryKey: ['tasks', today] })
       const prev = qc.getQueryData<any[]>(['tasks', today])
-      qc.setQueryData<any[]>(['tasks', today], old => (old || []).map(t => t.id === id ? { ...t, state } : t))
+      qc.setQueryData<any[]>(['tasks', today], old =>
+        (old || []).map(t => t.id === id ? { ...t, state } : t))
       return { prev }
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['tasks', today], ctx.prev) },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['tasks', today], ctx.prev)
+    },
   })
 
   const deleteMutation = useMutation({
@@ -42,16 +52,72 @@ export default function TasksPage() {
 
   const createMutation = useMutation({
     mutationFn: (title: string) => api.post('/api/v1/tasks', { title, date: today }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', today] }); setNewTitle('') },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks', today] })
+      setNewTitle('')
+    },
   })
 
+  // ── Preview handlers ──────────────────────────────────────────────────────
+  function previewToggle(id: string) {
+    setPreviewTasks(prev => prev.map(t => {
+      if (t.id !== id) return t
+      return { ...t, state: toggle(t.state as any) }
+    }))
+  }
+
+  function previewDelete(id: string) {
+    setPreviewTasks(prev => prev.filter(t => t.id !== id))
+  }
+
+  function previewCreate(title: string) {
+    const newTask = {
+      id: `preview-${Date.now()}`,
+      title,
+      state: 'pending',
+      sort_order: previewTasks.length,
+      date: today,
+      due_time: null,
+    }
+    setPreviewTasks(prev => [...prev, newTask])
+    setNewTitle('')
+  }
+
+  // ── Unified handlers ──────────────────────────────────────────────────────
+  function handleToggle(id: string, currentState: string) {
+    if (IS_PREVIEW) {
+      previewToggle(id)
+    } else {
+      toggleMutation.mutate({ id, state: toggle(currentState as any) })
+    }
+  }
+
+  function handleDelete(id: string) {
+    if (IS_PREVIEW) {
+      previewDelete(id)
+    } else {
+      deleteMutation.mutate(id)
+    }
+  }
+
+  function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newTitle.trim()) return
+    if (IS_PREVIEW) {
+      previewCreate(newTitle.trim())
+    } else {
+      createMutation.mutate(newTitle.trim())
+    }
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
   const completed = tasks.filter(t => t.state === 'completed').length
   const total = tasks.length
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
 
   const streak = (() => {
     let count = 0; const d = new Date()
-    while (true) {
+    for (let i = 0; i < 30; i++) {
       const key = d.toISOString().split('T')[0]
       if ((history as any)[key]) { count++; d.setDate(d.getDate() - 1) } else break
     }
@@ -66,7 +132,7 @@ export default function TasksPage() {
     <PageLayout title="Routine & Relay">
       {/* Progress hero */}
       <div className="glass-card" style={{ padding: '24px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(59,130,246,0.1)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'var(--color-accent-glow)', filter: 'blur(40px)', pointerEvents: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <RadialProgressRing percent={percent} size={88} strokeWidth={7} label={`${completed}/${total}`} />
           <div style={{ flex: 1 }}>
@@ -75,7 +141,7 @@ export default function TasksPage() {
               {completed} of {total} tasks completed today
             </div>
             <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${percent}%`, background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)', borderRadius: '2px', transition: 'width 800ms ease-out', boxShadow: '0 0 12px rgba(59,130,246,0.4)' }} />
+              <div style={{ height: '100%', width: `${percent}%`, background: 'linear-gradient(90deg, var(--color-accent), var(--color-accent-glow))', borderRadius: '2px', transition: 'width 800ms ease-out', boxShadow: '0 0 12px var(--color-accent-glow)' }} />
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
@@ -87,24 +153,29 @@ export default function TasksPage() {
       </div>
 
       {/* Add task */}
-      <form onSubmit={e => { e.preventDefault(); if (newTitle.trim()) createMutation.mutate(newTitle.trim()) }}
-        style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Add a new task…"
+      <form onSubmit={handleCreate} style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+        <input
+          value={newTitle}
+          onChange={e => setNewTitle(e.target.value)}
+          placeholder="Add a new task…"
+          className="input-accent"
           style={{ flex: 1, padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '0.9rem', outline: 'none' }}
-          onFocus={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)' }}
-          onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
         />
-        <button type="submit" style={{ padding: '11px 16px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6, #2563EB)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: '0.875rem', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
+        <button
+          type="submit"
+          className="btn-primary"
+          style={{ padding: '11px 16px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.875rem' }}
+        >
           <PlusIcon size={16} /> Add
         </button>
       </form>
 
       {/* Task sections */}
       {[
-        { label: 'Pending', items: pending, color: '#3B82F6', dimColor: 'rgba(59,130,246,0.08)' },
-        { label: 'Delayed', items: delayed, color: '#F59E0B', dimColor: 'rgba(245,158,11,0.08)' },
-        { label: 'Completed', items: done, color: '#10B981', dimColor: 'rgba(16,185,129,0.06)' },
-      ].filter(s => s.items.length > 0).map(({ label, items, color, dimColor }) => (
+        { label: 'Pending',   items: pending, color: 'var(--color-accent)' },
+        { label: 'Delayed',   items: delayed, color: '#F59E0B' },
+        { label: 'Completed', items: done,    color: '#10B981' },
+      ].filter(s => s.items.length > 0).map(({ label, items, color }) => (
         <div key={label} style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
@@ -115,12 +186,21 @@ export default function TasksPage() {
               <div key={t.id} style={{
                 display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 16px',
                 borderBottom: i < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                background: t.state === 'completed' ? dimColor : 'transparent',
+                background: t.state === 'completed' ? 'rgba(16,185,129,0.04)' : 'transparent',
                 transition: 'background 150ms',
               }}>
                 {/* Checkbox */}
-                <button onClick={() => { const newState = toggle(t.state); toggleMutation.mutate({ id: t.id, state: newState }) }}
-                  style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, border: `1.5px solid ${t.state === 'completed' ? color : 'rgba(255,255,255,0.2)'}`, background: t.state === 'completed' ? color : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 150ms', boxShadow: t.state === 'completed' ? `0 0 8px ${color}60` : 'none' }}>
+                <button
+                  onClick={() => handleToggle(t.id, t.state)}
+                  style={{
+                    width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0,
+                    border: `1.5px solid ${t.state === 'completed' ? 'var(--color-accent)' : 'rgba(255,255,255,0.2)'}`,
+                    background: t.state === 'completed' ? 'var(--color-accent)' : 'transparent',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 150ms',
+                    boxShadow: t.state === 'completed' ? '0 0 8px var(--color-accent-glow)' : 'none',
+                  }}
+                >
                   {t.state === 'completed' && (
                     <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M2 6l3 3 5-5" className="checkmark-path" />
@@ -143,9 +223,10 @@ export default function TasksPage() {
                   <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#F59E0B', background: 'rgba(245,158,11,0.12)', padding: '2px 7px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Late</span>
                 )}
 
-                <button onClick={() => deleteMutation.mutate(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', transition: 'color 150ms' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#F43F5E'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
+                <button
+                  onClick={() => handleDelete(t.id)}
+                  className="btn-danger-hover"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
                 >
                   <TrashIcon size={13} />
                 </button>

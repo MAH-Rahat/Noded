@@ -4,8 +4,8 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts'
 interface SparklineProps {
   data: number[]
   color?: string
-  width?: number
-  height?: number
+  width?: number | string
+  height?: number | string
 }
 
 export function Sparkline({ data, color = 'var(--color-accent)', width = 60, height = 24 }: SparklineProps) {

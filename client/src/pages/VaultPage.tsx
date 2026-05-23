@@ -116,7 +116,7 @@ export default function VaultPage() {
               <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>· {snippets.length} secrets</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setShowAdd(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: 'var(--color-accent)', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: '0.8rem', fontWeight: 600 }}>
+            <button onClick={() => setShowAdd(s => !s)} className="glow-hover" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', borderRadius: '10px', background: 'var(--color-accent-dim)', border: '1px solid var(--color-accent)', color: 'var(--color-accent)', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: '0.8rem', fontWeight: 600 }}>
                 <PlusIcon size={14} /> Add
               </button>
               <button onClick={lock} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--color-text-muted)', cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: '0.8rem', fontWeight: 600 }}>
@@ -183,10 +183,7 @@ export default function VaultPage() {
                           <button onClick={() => handleCopy(s.id, s.content)} style={{ padding: '6px', borderRadius: '7px', background: isCopied ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isCopied ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`, color: isCopied ? '#10B981' : 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 200ms' }}>
                             <CopyIcon size={13} />
                           </button>
-                          <button onClick={() => deleteMutation.mutate(s.id)} style={{ padding: '6px', borderRadius: '7px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'color 150ms' }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#F43F5E'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
-                          >
+                  <button onClick={() => deleteMutation.mutate(s.id)} className="btn-danger-hover" style={{ padding: '6px', borderRadius: '7px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <TrashIcon size={13} />
                           </button>
                         </div>
