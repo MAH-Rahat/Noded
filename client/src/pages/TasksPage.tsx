@@ -196,6 +196,12 @@ function TaskCard({ task, isLast, onToggle, onDelete, onAddSubtask, onToggleSubt
               textDecoration: task.state === 'completed' ? 'line-through' : 'none',
             }}>{task.title}</span>
             {decayed && <span title="High priority task pending for 2+ days" style={{ fontSize: '0.75rem' }}>⚠</span>}
+            {/* Show date badge if not today */}
+            {task.date !== today && (
+              <span style={{ fontSize: '0.6rem', fontWeight: 700, color: task.date < today ? '#F43F5E' : '#3B82F6', background: task.date < today ? 'rgba(244,63,94,0.1)' : 'rgba(59,130,246,0.1)', padding: '1px 5px', borderRadius: '4px' }}>
+                {new Date(task.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
             {task.repeat && (
               <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#3B82F6', background: 'rgba(59,130,246,0.12)', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 {task.repeat}
@@ -425,6 +431,7 @@ export default function TasksPage() {
   const [newRepeat, setNewRepeat] = useState<string>('')
   const [newListId, setNewListId] = useState<string>('')
   const [activeListId, setActiveListId] = useState<string>('all')
+  const [sortMode, setSortMode] = useState<'date' | 'priority'>('date')
   const [showNewListForm, setShowNewListForm] = useState(false)
   const [newListName, setNewListName] = useState('')
   const [newListColor, setNewListColor] = useState('#6390F0')
@@ -630,9 +637,13 @@ export default function TasksPage() {
   })()
 
   // ── Bucket grouping ───────────────────────────────────────────────────────
-  // Only top-level tasks (no parent_id), filtered by active list
   const rootTasks = allTasks.filter(t => !t.parent_id)
   const filteredTasks = activeListId === 'all' ? rootTasks : rootTasks.filter(t => t.list_id === activeListId)
+
+  // Priority mode: single flat bucket sorted by priority then date
+  const prioritySorted = useMemo(() => sortByPriority(
+    [...filteredTasks].sort((a, b) => a.date.localeCompare(b.date))
+  ), [filteredTasks])
 
   const buckets = useMemo(() => {
     const map: Record<string, Task[]> = {}
@@ -838,24 +849,72 @@ export default function TasksPage() {
         </div>
       </form>
 
-      {/* Date buckets */}
-      {BUCKET_ORDER.filter(b => buckets[b].length > 0).map(b => (
-        <BucketSection
-          key={b}
-          bucketKey={b}
-          tasks={buckets[b]}
-          onToggle={handleToggle}
-          onDelete={handleDelete}
-          onAddSubtask={handleAddSubtask}
-          onToggleSubtask={handleToggle}
-          onDeleteSubtask={handleDelete}
-          onUpdateNotes={handleUpdateNotes}
-        />
-      ))}
+      {/* Sort controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>SORT:</span>
+        {(['date', 'priority'] as const).map(mode => (
+          <button key={mode} onClick={() => setSortMode(mode)} style={{
+            padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '0.72rem', fontWeight: 600,
+            border: `1px solid ${sortMode === mode ? 'var(--color-accent)' : 'var(--glass-border)'}`,
+            background: sortMode === mode ? 'var(--color-accent-dim)' : 'transparent',
+            color: sortMode === mode ? 'var(--color-accent)' : 'var(--color-text-muted)',
+            cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'all 150ms',
+          }}>{mode === 'date' ? '📅 Date' : '🔴 Priority'}</button>
+        ))}
+      </div>
 
-      {filteredTasks.length === 0 && (
-        <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No tasks yet. Add one above.</div>
+      {/* Date buckets or priority view */}
+      {sortMode === 'date' ? (
+        <>
+          {BUCKET_ORDER.filter(b => buckets[b].length > 0).map(b => (
+            <BucketSection
+              key={b}
+              bucketKey={b}
+              tasks={buckets[b]}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+              onAddSubtask={handleAddSubtask}
+              onToggleSubtask={handleToggle}
+              onDeleteSubtask={handleDelete}
+              onUpdateNotes={handleUpdateNotes}
+            />
+          ))}
+          {filteredTasks.length === 0 && (
+            <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No tasks yet. Add one above.</div>
+            </div>
+          )}
+        </>
+      ) : (
+        /* Priority view — flat list, HIGH first */
+        <div>
+          {(['high', 'medium', 'low'] as const).map(p => {
+            const pTasks = prioritySorted.filter(t => (t.priority ?? 'medium') === p)
+            if (pTasks.length === 0) return null
+            return (
+              <div key={p} style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: PRIORITY_COLOR[p], boxShadow: `0 0 6px ${PRIORITY_COLOR[p]}` }} />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: PRIORITY_COLOR[p], textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {p} PRIORITY ({pTasks.filter(t => t.state !== 'completed').length})
+                  </span>
+                </div>
+                <div className="glass-card" style={{ overflow: 'hidden' }}>
+                  {pTasks.filter(t => t.state !== 'completed').map((t, i, arr) => (
+                    <TaskCard key={t.id} task={t} isLast={i === arr.length - 1}
+                      onToggle={() => handleToggle(t.id, t.state)} onDelete={() => handleDelete(t.id)}
+                      onAddSubtask={handleAddSubtask} onToggleSubtask={handleToggle}
+                      onDeleteSubtask={handleDelete} onUpdateNotes={handleUpdateNotes} />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+          {prioritySorted.filter(t => t.state !== 'completed').length === 0 && (
+            <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>No tasks yet. Add one above.</div>
+            </div>
+          )}
         </div>
       )}
 
