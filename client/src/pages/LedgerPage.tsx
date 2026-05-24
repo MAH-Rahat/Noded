@@ -203,32 +203,32 @@ export default function LedgerPage() {
           </div>
         )}
 
-        {/* Expense breakdown pie chart */}
-        {(pieData.length > 0 || pieFilteredTx.length === 0) && (
-          <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em' }}>WHERE YOU SPEND MOST</div>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {(['day', 'week', 'month'] as const).map(r => (
-                  <button key={r} onClick={() => setPieRange(r)} style={{ padding: '3px 9px', borderRadius: 'var(--radius-pill)', fontSize: '0.65rem', fontWeight: 700, border: `1px solid ${pieRange === r ? Y : 'var(--color-border)'}`, background: pieRange === r ? Y + '15' : 'transparent', color: pieRange === r ? Y : 'var(--color-text-muted)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'all 150ms' }}>{r}</button>
-                ))}
-              </div>
+        {/* Expense breakdown pie chart — always shown */}
+        <div style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em' }}>WHERE YOU SPEND MOST</div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {(['day', 'week', 'month'] as const).map(r => (
+                <button key={r} onClick={() => setPieRange(r)} style={{ padding: '3px 9px', borderRadius: 'var(--radius-pill)', fontSize: '0.65rem', fontWeight: 700, border: `1px solid ${pieRange === r ? Y : 'var(--color-border)'}`, background: pieRange === r ? Y + '15' : 'transparent', color: pieRange === r ? Y : 'var(--color-text-muted)', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'all 150ms' }}>{r}</button>
+              ))}
             </div>
-            {pieData.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>No expenses for this {pieRange}</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                    {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
-                  <Legend iconType="circle" iconSize={8} formatter={(value: string) => <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{value}</span>} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
           </div>
-        )}
+          {pieData.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+              No expense data for this {pieRange}. Add transactions with categories to see the breakdown.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                  {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--color-text-primary)' }} formatter={(v: number) => ['BDT ' + v.toLocaleString(), '']} />
+                <Legend iconType="circle" iconSize={8} formatter={(value: string) => <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{value}</span>} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
 
         {/* Anomaly */}
         {anomaly && (
