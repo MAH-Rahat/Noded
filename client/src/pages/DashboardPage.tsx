@@ -6,7 +6,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import { usePokemonTheme } from '../hooks/usePokemonTheme'
 import { RadialProgressRing } from '../components/charts/RadialProgressRing'
 import { Sparkline } from '../components/charts/Sparkline'
-import { usePokemonStore, POKEMON_TYPE_COLORS, getTierFromXP } from '../stores/pokemonStore'
+import { usePokemonStore, POKEMON_TYPE_COLORS, getXPProgress } from '../stores/pokemonStore'
 import { useUIStore } from '../stores/uiStore'
 import { useAuthStore } from '../stores/authStore'
 import { TrendingUpIcon, CheckSquareIcon, FileTextIcon, ShieldIcon, ChevronRightIcon, FlameIcon, ClockIcon, PlusIcon } from '../components/ui/Icons'
@@ -70,10 +70,7 @@ function SectionHeader({ title, linkTo, linkLabel = 'View all' }: { title: strin
 function PokemonCard() {
   const { type, pokemonName, description, spriteUrl, xp } = usePokemonStore()
   const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.grass
-  const tierInfo = getTierFromXP(xp ?? 0)
-  const tierLabel = tierInfo.tierName === 'Master' ? 'Master' : `${tierInfo.tierName} ${tierInfo.division}`
-  // Next evolution hint
-  const nextXP = tierInfo.xpForNext - tierInfo.xpInDivision
+  const { xpInStage, xpForNext, progressPct } = getXPProgress(xp ?? 0)
   return (
     <div className="glass-card" style={{ padding: '20px', marginBottom: '24px', position: 'relative', overflow: 'hidden', border: '1px solid ' + colors.hex + '30' }}>
       <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: colors.glow, filter: 'blur(50px)', pointerEvents: 'none' }} />
@@ -86,19 +83,17 @@ function PokemonCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>{pokemonName}</span>
             <span className="poke-type-badge" style={{ '--color-accent': colors.hex, '--color-accent-dim': colors.dim } as any}>{type}</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: tierInfo.tierColor, background: tierInfo.tierColor + '20', padding: '2px 7px', borderRadius: '4px', border: `1px solid ${tierInfo.tierColor}40` }}>{tierLabel}</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '8px', lineHeight: 1.5 }}>{description}</div>
-          {/* XP bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: tierInfo.tierColor, flexShrink: 0 }}>{tierInfo.xpInDivision} XP</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: colors.hex, flexShrink: 0 }}>{xpInStage} XP</span>
             <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(tierInfo.xpInDivision / tierInfo.xpForNext) * 100}%`, background: `linear-gradient(90deg, ${tierInfo.tierColor}, ${colors.hex})`, borderRadius: '3px', transition: 'width 1s ease-out', boxShadow: `0 0 8px ${tierInfo.tierColor}80` }} />
+              <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${colors.hex}, ${colors.glow})`, borderRadius: '3px', transition: 'width 1s ease-out', boxShadow: `0 0 8px ${colors.glow}` }} />
             </div>
-            <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{tierInfo.xpForNext} XP</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{xpForNext > 0 ? xpForNext + ' XP' : 'MAX'}</span>
           </div>
           <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>
-            {nextXP > 0 ? `${nextXP} XP to next evolution` : '✨ Max evolution reached!'} · Total: {tierInfo.totalXP} XP
+            {xpForNext > 0 ? `${xpForNext - xpInStage} XP to evolve` : '✨ Final evolution!'} · Total: {xp ?? 0} XP
           </div>
         </div>
       </div>

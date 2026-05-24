@@ -1,11 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  usePokemonStore,
-  POKEMON_TYPE_COLORS,
-  getTierFromXP,
-  XP_RULES,
-} from '../stores/pokemonStore'
+import { usePokemonStore, POKEMON_TYPE_COLORS, XP_RULES } from '../stores/pokemonStore'
 
 function darkenHex(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -28,11 +23,11 @@ export function usePokemonTheme({
   totalToday?: number
   expenseOnBudget?: boolean
 } = {}) {
-  const { type, xp, pokemonId, addXP, setSprite, spriteUrl } = usePokemonStore()
+  const { type, xp, pokemonId, addXP, setSprite, spriteUrl, lastXPDate } = usePokemonStore()
   const prevStreakRef = useRef(streak)
   const todayKey = new Date().toISOString().split('T')[0]
-  const lastXPDate = usePokemonStore(s => s.lastXPDate)
 
+  // Apply daily XP — once per day
   useEffect(() => {
     if (lastXPDate === todayKey) return
     let delta = 0
@@ -49,6 +44,7 @@ export function usePokemonTheme({
     prevStreakRef.current = streak
   }, [todayKey])
 
+  // Fetch sprite
   const { data: pokeData } = useQuery({
     queryKey: ['pokemon', pokemonId],
     queryFn: () => fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`).then(r => r.json()),
@@ -64,21 +60,21 @@ export function usePokemonTheme({
     }
   }, [pokeData])
 
-  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.water
+  // Apply accent color
+  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.grass
   useEffect(() => {
-    const applyColors = () => {
+    const apply = () => {
       const isLight = document.documentElement.getAttribute('data-theme') === 'light'
-      const accentHex = isLight ? darkenHex(colors.hex, 0.25) : colors.hex
-      document.documentElement.style.setProperty('--color-accent', accentHex)
+      const hex = isLight ? darkenHex(colors.hex, 0.25) : colors.hex
+      document.documentElement.style.setProperty('--color-accent', hex)
       document.documentElement.style.setProperty('--color-accent-glow', colors.glow)
       document.documentElement.style.setProperty('--color-accent-dim', colors.dim)
     }
-    applyColors()
-    const observer = new MutationObserver(applyColors)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => observer.disconnect()
+    apply()
+    const obs = new MutationObserver(apply)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
   }, [type])
 
-  const tierInfo = getTierFromXP(xp ?? 0)
-  return { type, xp, tierInfo, colors, spriteUrl }
+  return { type, xp, colors, spriteUrl }
 }

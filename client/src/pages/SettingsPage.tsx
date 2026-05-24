@@ -59,8 +59,8 @@ const inputStyle: React.CSSProperties = {
 export default function SettingsPage() {
   const { user, setAccentColor, setBackgroundColor } = useAuthStore()
   const { theme, toggleTheme, font, setFont, dashWidgets, toggleWidget } = useUIStore()
-  const { type, level, pokemonName, spriteUrl } = usePokemonStore()
-  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.water
+  const { type, xp, pokemonName, spriteUrl } = usePokemonStore()
+  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.grass
 
   // Live stats for the Pokemon card
   const today = new Date().toISOString().split('T')[0]
@@ -192,14 +192,14 @@ export default function SettingsPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span className="poke-type-badge" style={{ fontSize: '0.6rem', padding: '2px 7px' }}>{type}</span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>· Level {level}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>· {xp ?? 0} XP</span>
               </div>
-              {/* Level bar */}
+              {/* XP bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div className="level-bar-fill" style={{ width: `${level}%` }} />
+                  <div className="level-bar-fill" style={{ width: `${Math.min(100, ((xp ?? 0) / 3000) * 100)}%` }} />
                 </div>
-                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{level}/100</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{xp ?? 0}/3000</span>
               </div>
             </div>
           </div>
@@ -338,8 +338,8 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
             {spriteUrl && <img src={spriteUrl} alt={pokemonName} style={{ width: '36px', height: '36px', objectFit: 'contain', imageRendering: 'pixelated', filter: `drop-shadow(0 0 6px ${colors.hex}80)` }} />}
             <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>Your Pokémon Guide</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>How the companion system works</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>Your Pokémon Training Guide</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>How to train, evolve, and protect your Pokémon</div>
             </div>
           </div>
 
@@ -348,7 +348,7 @@ export default function SettingsPage() {
             {[
               { label: 'Current Pokémon', value: pokemonName, color: colors.hex },
               { label: 'Type', value: type.charAt(0).toUpperCase() + type.slice(1), color: colors.hex },
-              { label: 'Level', value: `${level} / 100`, color: 'var(--color-text-primary)' },
+              { label: 'Total XP', value: `${xp ?? 0} XP`, color: 'var(--color-text-primary)' },
               { label: 'Task Streak', value: `${streak} days 🔥`, color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' },
               { label: 'Tasks Today', value: `${completedToday}/${totalToday} (${taskPct}%)`, color: taskPct === 100 ? '#10B981' : 'var(--color-text-primary)' },
               { label: 'Savings Rate', value: `${savingsRate}%`, color: savingsRate >= 30 ? '#10B981' : savingsRate >= 10 ? colors.hex : '#F43F5E' },
@@ -362,24 +362,24 @@ export default function SettingsPage() {
 
           {[
             {
-              icon: '🔄',
-              title: 'How a new Pokémon arrives',
-              body: 'Your Pokémon is determined by your savings rate. Spend less than you earn and your type shifts — from Fire (overspending) → Fighting → Grass → Water → Electric → Dragon → Psychic → Steel (fortress savings). Each type maps to an iconic Pokémon like Vaporeon (Water) or Jolteon (Electric).',
+              icon: '🌱',
+              title: 'How your Pokémon starts',
+              body: 'Everyone starts with Bulbasaur at 0 XP. As you earn XP through daily activity, your Pokémon evolves — Bulbasaur → Ivysaur → Venusaur → Charmander → Charmeleon → Charizard → Squirtle → Wartortle → Blastoise → Mewtwo.',
             },
             {
               icon: '⬆️',
-              title: 'How to level up',
-              body: 'Your level (1–100) is calculated from your task streak × 3 plus a bonus from your daily completion rate. Complete all your tasks every day to build a streak and watch your level climb. Level 100 means 33+ day streak with perfect task completion.',
+              title: 'How to earn XP',
+              body: 'Complete a task: +15 XP. Complete ALL tasks for the day: +25 XP bonus. Each day of active streak: +5 XP. Expenses within budget: +10 XP.',
             },
             {
-              icon: '✨',
-              title: 'How Pokémon evolve',
-              body: 'Your Pokémon changes (evolves) when your financial type changes. Improve your savings rate to unlock stronger types. For example: save 30%+ of income → Water type (Vaporeon), save 40%+ → Electric (Jolteon), save 55%+ → Dragon (Dragonite), save 70%+ → Psychic (Alakazam).',
+              icon: '⚠️',
+              title: 'How to lose XP',
+              body: 'Break your task streak: −20 XP. Expenses over budget: −15 XP. XP never goes below 0 — your Pokémon will never de-evolve, but it will stop growing if you stop working.',
             },
             {
-              icon: '📊',
-              title: 'What drives your type',
-              body: 'Add income and expense transactions in the Ledger. Your savings rate = (income − expenses) / income × 100. The higher your savings rate, the rarer and more powerful your Pokémon type becomes.',
+              icon: '🛡️',
+              title: 'How to protect your XP',
+              body: 'Complete at least one task every day to keep your streak alive. Stay within your monthly budget. Even small daily actions add up — consistency is the key to reaching Mewtwo.',
             },
           ].map(({ icon, title, body }) => (
             <div key={title} style={{ marginBottom: '14px', padding: '12px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}>
