@@ -457,7 +457,13 @@ export default function TasksPage() {
     queryFn: () => IS_PREVIEW ? Promise.resolve(MOCK_HISTORY) : api.get('/api/v1/tasks/history').then(r => r.data.data),
   })
 
-  const allTasks: Task[] = IS_PREVIEW ? previewTasks : serverTasks
+  // Filter out completed tasks older than 2 days (they'll be auto-deleted by backend)
+  const TWO_DAYS_AGO = new Date(); TWO_DAYS_AGO.setDate(TWO_DAYS_AGO.getDate() - 2)
+  const allTasks: Task[] = (IS_PREVIEW ? previewTasks : serverTasks).filter(t => {
+    if (t.state !== 'completed') return true
+    const taskDate = new Date(t.date + 'T00:00:00')
+    return taskDate > TWO_DAYS_AGO
+  })
 
   // ── Mutations (real backend) ──────────────────────────────────────────────
   const toggleMutation = useMutation({
