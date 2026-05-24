@@ -38,17 +38,27 @@ function PinModal({ onUnlock, onCancel }: { onUnlock: () => void; onCancel: () =
     else { setErr('Wrong PIN'); setPin('') }
   }
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '28px 24px', width: '280px', textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔒</div>
-        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '4px' }}>Protected Note</div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Enter your notes PIN to view</div>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 400,
+      background: 'rgba(0,0,0,0.85)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--color-surface-2)', border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-lg)', padding: '28px 24px', width: '280px', textAlign: 'center',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+      }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🔒</div>
+        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '4px' }}>Protected Note</div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '20px' }}>Enter your notes PIN to view</div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="Enter PIN" autoFocus inputMode="numeric"
-            style={{ padding: '10px', background: 'var(--color-surface)', border: `1px solid ${err ? '#F43F5E' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '1rem', outline: 'none', textAlign: 'center', letterSpacing: '0.3em' }} />
-          {err && <div style={{ fontSize: '0.75rem', color: '#F43F5E' }}>{err}</div>}
-          <button type="submit" className="btn-primary" style={{ padding: '10px', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>Unlock</button>
-          <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>Cancel</button>
+          <input type="password" value={pin} onChange={e => setPin(e.target.value)} placeholder="• • • •" autoFocus inputMode="numeric"
+            style={{ padding: '12px', background: 'var(--color-surface)', border: `1.5px solid ${err ? '#F43F5E' : 'var(--color-border)'}`, borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '1.2rem', outline: 'none', textAlign: 'center', letterSpacing: '0.5em' }} />
+          {err && <div style={{ fontSize: '0.75rem', color: '#F43F5E', fontWeight: 600 }}>{err}</div>}
+          <button type="submit" className="btn-primary" style={{ padding: '11px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}>Unlock</button>
+          <button type="button" onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '0.8rem', padding: '4px' }}>Cancel</button>
         </form>
       </div>
     </div>
@@ -168,7 +178,12 @@ export default function CanvasPage() {
         initialTagColor={note?.tag_color}
         initialCategory={note?.category}
         initialLocked={note?.locked}
-        onClose={() => { setEditingId(null); if (!IS_PREVIEW) qc.invalidateQueries({ queryKey: ['notes'] }) }}
+        onClose={() => {
+          // Re-lock the note when closing
+          setUnlockedIds(prev => { const n = new Set(prev); n.delete(editingId); return n })
+          setEditingId(null)
+          if (!IS_PREVIEW) qc.invalidateQueries({ queryKey: ['notes'] })
+        }}
       />
     )
   }

@@ -195,8 +195,13 @@ export function NoteEditor({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Category:</span>
-          <input value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. Education"
-            style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '0.8rem', width: '100px' }} />
+          {initialCategory ? (
+            // If note was created in a folder, show it as read-only
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 600 }}>📁 {category}</span>
+          ) : (
+            <input value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. Education"
+              style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '0.8rem', width: '100px' }} />
+          )}
         </div>
       </div>
 

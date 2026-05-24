@@ -321,30 +321,6 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      {/* Security */}
-      <Section title="Security">
-        {pwToast && <Toast message={pwToast.msg} type={pwToast.type} />}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {[
-            { label: 'Current Password', value: currentPw, setter: setCurrentPw },
-            { label: 'New Password', value: newPw, setter: setNewPw },
-            { label: 'Confirm Password', value: confirmPw, setter: setConfirmPw },
-          ].map(({ label, value, setter }) => (
-            <div key={label}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '6px' }}>{label}</label>
-              <input type="password" placeholder="••••••••" value={value} onChange={e => setter(e.target.value)} style={inputStyle}
-                onFocus={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)' }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
-              />
-            </div>
-          ))}
-          <button onClick={handleUpdatePassword} disabled={pwMutation.isPending}
-            style={{ padding: '10px', borderRadius: '10px', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', color: '#F43F5E', fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: pwMutation.isPending ? 0.6 : 1 }}>
-            {pwMutation.isPending ? 'Updating…' : 'Update Password'}
-          </button>
-        </div>
-      </Section>
-
       {/* Notes PIN */}
       <NotesPinSection />
 
