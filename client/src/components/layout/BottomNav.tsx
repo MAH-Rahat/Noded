@@ -1,12 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { HomeIcon, TrendingUpIcon, CheckSquareIcon, FileTextIcon, ShieldIcon } from '../ui/Icons'
+import { HomeIcon, TrendingUpIcon, CheckSquareIcon, FileTextIcon } from '../ui/Icons'
 
 const NAV_ITEMS = [
   { to: '/dashboard', Icon: HomeIcon,        label: 'Home' },
   { to: '/ledger',    Icon: TrendingUpIcon,  label: 'Ledger' },
   { to: '/tasks',     Icon: CheckSquareIcon, label: 'Tasks' },
   { to: '/canvas',    Icon: FileTextIcon,    label: 'Notes' },
-  { to: '/vault',     Icon: ShieldIcon,      label: 'Vault' },
 ]
 
 export function BottomNav() {

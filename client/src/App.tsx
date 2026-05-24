@@ -18,7 +18,6 @@ import DashboardPage from './pages/DashboardPage'
 import LedgerPage from './pages/LedgerPage'
 import TasksPage from './pages/TasksPage'
 import CanvasPage from './pages/CanvasPage'
-import VaultPage from './pages/VaultPage'
 import SettingsPage from './pages/SettingsPage'
 
 function OnlineWatcher() {
@@ -117,7 +116,6 @@ function AppShell() {
         <Route path="/ledger"    element={<Protected><LedgerPage /></Protected>} />
         <Route path="/tasks"     element={<Protected><TasksPage /></Protected>} />
         <Route path="/canvas"    element={<Protected><CanvasPage /></Protected>} />
-        <Route path="/vault"     element={<Protected><VaultPage /></Protected>} />
         <Route path="/settings"  element={<Protected><SettingsPage /></Protected>} />
       </Routes>
     </>
