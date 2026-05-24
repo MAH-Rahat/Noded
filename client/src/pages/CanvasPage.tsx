@@ -169,6 +169,8 @@ export default function CanvasPage() {
 
   if (editingId) {
     const note = notes.find(n => n.id === editingId)
+    // Use openFolder as the category if note doesn't have one yet (new note in folder)
+    const noteCategory = note?.category ?? openFolder ?? null
     return (
       <NoteEditor
         noteId={editingId}
@@ -176,7 +178,7 @@ export default function CanvasPage() {
         initialBody={note?.body ?? ''}
         initialTagLabel={note?.tag_label}
         initialTagColor={note?.tag_color}
-        initialCategory={note?.category}
+        initialCategory={noteCategory}
         initialLocked={note?.locked}
         onClose={() => {
           // Re-lock the note when closing

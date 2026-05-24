@@ -23,7 +23,7 @@ export function NoteEditor({
   const [title, setTitle] = useState(initialTitle)
   const [tagLabel, setTagLabel] = useState(initialTagLabel ?? '')
   const [tagColor, setTagColor] = useState(initialTagColor ?? TAG_COLORS[0])
-  const [category, setCategory] = useState(initialCategory ?? '')
+  const [category, setCategory] = useState(initialCategory || '')
   const [locked, setLocked] = useState(initialLocked ?? false)
   const [saved, setSaved] = useState(true)
   const [showColorPicker, setShowColorPicker] = useState(false)
@@ -44,11 +44,17 @@ export function NoteEditor({
   categoryRef.current = category
   lockedRef.current = locked
 
-  // Initialize editor content once
+  // Initialize editor content once + save category immediately for new notes in folders
   useEffect(() => {
     if (editorRef.current && !didInit.current) {
       didInit.current = true
       editorRef.current.innerHTML = initialBody || ''
+    }
+    // If this is a new note in a folder (no body yet), save immediately to persist the category
+    if (initialCategory && !initialBody) {
+      saveTimer.current = setTimeout(() => {
+        saveMutation.mutate('')
+      }, 500)
     }
   }, [])
 
