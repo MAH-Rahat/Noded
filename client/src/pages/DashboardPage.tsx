@@ -69,16 +69,18 @@ function SectionHeader({ title, linkTo, linkLabel = 'View all' }: { title: strin
 
 function PokemonCard() {
   const { type, pokemonName, description, spriteUrl, xp } = usePokemonStore()
-  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.water
+  const colors = POKEMON_TYPE_COLORS[type] ?? POKEMON_TYPE_COLORS.grass
   const tierInfo = getTierFromXP(xp ?? 0)
   const tierLabel = tierInfo.tierName === 'Master' ? 'Master' : `${tierInfo.tierName} ${tierInfo.division}`
+  // Next evolution hint
+  const nextXP = tierInfo.xpForNext - tierInfo.xpInDivision
   return (
     <div className="glass-card" style={{ padding: '20px', marginBottom: '24px', position: 'relative', overflow: 'hidden', border: '1px solid ' + colors.hex + '30' }}>
       <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: colors.glow, filter: 'blur(50px)', pointerEvents: 'none' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
         <div style={{ flexShrink: 0, width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {spriteUrl ? <img src={spriteUrl} alt={pokemonName} className="poke-float" style={{ width: '80px', height: '80px', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 0 12px ' + colors.hex + '80)' }} />
-            : <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: colors.dim, border: '2px solid ' + colors.hex + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>⚡</div>}
+            : <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: colors.dim, border: '2px solid ' + colors.hex + '40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🌱</div>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
@@ -86,16 +88,18 @@ function PokemonCard() {
             <span className="poke-type-badge" style={{ '--color-accent': colors.hex, '--color-accent-dim': colors.dim } as any}>{type}</span>
             <span style={{ fontSize: '0.65rem', fontWeight: 700, color: tierInfo.tierColor, background: tierInfo.tierColor + '20', padding: '2px 7px', borderRadius: '4px', border: `1px solid ${tierInfo.tierColor}40` }}>{tierLabel}</span>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '10px', lineHeight: 1.5 }}>{description}</div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '8px', lineHeight: 1.5 }}>{description}</div>
           {/* XP bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: tierInfo.tierColor, flexShrink: 0 }}>{tierInfo.xpInDivision} XP</span>
-            <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(tierInfo.xpInDivision / tierInfo.xpForNext) * 100}%`, background: `linear-gradient(90deg, ${tierInfo.tierColor}, ${colors.hex})`, borderRadius: '2px', transition: 'width 1s ease-out', boxShadow: `0 0 8px ${tierInfo.tierColor}80` }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: tierInfo.tierColor, flexShrink: 0 }}>{tierInfo.xpInDivision} XP</span>
+            <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(tierInfo.xpInDivision / tierInfo.xpForNext) * 100}%`, background: `linear-gradient(90deg, ${tierInfo.tierColor}, ${colors.hex})`, borderRadius: '3px', transition: 'width 1s ease-out', boxShadow: `0 0 8px ${tierInfo.tierColor}80` }} />
             </div>
-            <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{tierInfo.xpForNext} XP</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>{tierInfo.xpForNext} XP</span>
           </div>
-          <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '3px' }}>Total XP: {tierInfo.totalXP}</div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>
+            {nextXP > 0 ? `${nextXP} XP to next evolution` : '✨ Max evolution reached!'} · Total: {tierInfo.totalXP} XP
+          </div>
         </div>
       </div>
     </div>
