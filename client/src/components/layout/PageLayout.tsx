@@ -10,18 +10,27 @@ interface PageLayoutProps {
 
 export function PageLayout({ title, children }: PageLayoutProps) {
   return (
-    <div style={{ minHeight: '100vh', minHeight: '100dvh' as any, backgroundColor: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      minHeight: '100dvh',
+      backgroundColor: 'var(--color-bg)',
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      overflowX: 'hidden',
+    }}>
       <TopBar title={title} />
       <SearchOverlay />
       <main
         className="page-enter"
         style={{
           flex: 1,
-          padding: '16px 16px 96px',
-          maxWidth: '800px',
+          padding: '12px 12px 96px',
           width: '100%',
+          maxWidth: '800px',
           margin: '0 auto',
           boxSizing: 'border-box',
+          overflowX: 'hidden',
+          minWidth: 0,
         }}
       >
         {children}

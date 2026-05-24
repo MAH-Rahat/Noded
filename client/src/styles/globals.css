@@ -106,17 +106,30 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --z-topbar:  100;
+  --z-stats-bar: 100;
   --z-overlay: 200;
   --z-modal:   300;
   --z-nav:     150;
 }
 
 /* ─── Reset ────────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip; /* clip instead of hidden — doesn't break fixed positioning */
   background-color: var(--color-bg);
   background-image:
     radial-gradient(ellipse 80% 50% at 50% -20%, var(--body-bg-gradient-1) 0%, transparent 60%),
@@ -124,14 +137,24 @@ body {
   background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 300ms, color 300ms;
 }
 
-#root { min-height: 100vh; display: flex; flex-direction: column; }
+@media (min-width: 480px) { body { font-size: 15px; } }
+@media (min-width: 768px) { body { font-size: 16px; } }
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+}
 
 /* ─── Glass card ───────────────────────────────────────────────────────────── */
 .glass-card {
@@ -233,6 +256,7 @@ a .glass-card:hover,
 /* ─── Input focus ──────────────────────────────────────────────────────────── */
 .input-field {
   width: 100%;
+  min-width: 0;
   padding: 11px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -312,6 +336,8 @@ a .glass-card:hover,
   border: 1px solid var(--glass-border);
   box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
   transition: background 300ms;
+  /* Prevent nav from being wider than screen */
+  max-width: calc(100vw - 24px);
 }
 
 /* ─── Pokémon badge ────────────────────────────────────────────────────────── */
@@ -438,33 +464,16 @@ a .glass-card:hover,
   }
 }
 
-/* ─── Mobile viewport fixes ────────────────────────────────────────────────── */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  height: 100%;
-}
-
-body {
-  overflow-x: hidden;
-  min-height: 100%;
-  min-height: 100dvh;
-}
-
-#root {
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
 /* ─── Mobile: small screens ────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  /* Bottom nav spans full width as a pill */
+  /* Bottom nav: full width pill at bottom */
   .bottom-nav {
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     transform: none;
     justify-content: space-around;
     width: auto;
+    max-width: none;
   }
 
   /* Topbar compact */
@@ -490,6 +499,11 @@ body {
     padding: 8px 10px;
     flex: 1;
     justify-content: center;
+  }
+
+  /* Glass cards: slightly smaller radius on mobile */
+  .glass-card {
+    border-radius: var(--radius-lg);
   }
 }
 
