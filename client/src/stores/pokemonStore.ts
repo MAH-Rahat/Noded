@@ -36,7 +36,6 @@ export const TIERS = [
 
 // Total XP thresholds per tier-division (100 XP per division, 300 per tier)
 const XP_PER_DIVISION = 100
-const TOTAL_DIVISIONS = TIERS.reduce((s, t) => s + t.divisions, 0) // 16
 
 export function getTierFromXP(xp: number): { tierName: string; division: number; tierColor: string; xpInDivision: number; xpForNext: number; totalXP: number } {
   const clampedXP = Math.max(0, xp)
@@ -82,21 +81,12 @@ export function determineTypeFromTier(tierName: string): string {
 }
 
 // Legacy: keep for backward compat
-export function determineType(taskPct: number, savingsRate: number): string {
-  if (savingsRate < 0)   return 'fire'
-  if (savingsRate < 10)  return 'fighting'
-  if (savingsRate < 20)  return 'grass'
-  if (savingsRate < 30)  return 'water'
-  if (savingsRate < 40)  return 'electric'
-  if (savingsRate < 55)  return 'dragon'
-  if (savingsRate < 70)  return 'psychic'
-  return 'steel'
+export function determineType(_taskPct: number, _savingsRate: number): string {
+  return 'water'
 }
 
-export function determineLevel(streak: number, taskPct: number): number {
-  const base = Math.min(streak * 3, 60)
-  const bonus = Math.round(taskPct * 0.4)
-  return Math.max(1, Math.min(100, base + bonus))
+export function determineLevel(_streak: number, _taskPct: number): number {
+  return 1
 }
 
 export const TYPE_POKEMON: Record<string, { name: string; id: number; description: string }> = {

@@ -48,7 +48,7 @@ export function TransactionList({ transactions, onDelete }: TransactionListProps
 
           {/* Details */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', truncate: 'ellipsis' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {tx.category || tx.description || '—'}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{tx.date}</div>

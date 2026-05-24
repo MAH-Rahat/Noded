@@ -18,12 +18,6 @@ const ACCENT_OPTIONS = [
   { label: 'Lime',           value: '#84CC16' },
   { label: 'Orange',         value: '#F97316' },
   { label: 'Indigo',         value: '#6366F1' },
-  // Custom color — user can pick any hex
-]
-  { label: 'Violet Purple',  value: '#8B5CF6' },
-  { label: 'Rose Red',       value: '#F43F5E' },
-  { label: 'Amber',          value: '#F59E0B' },
-  { label: 'Cyan',           value: '#06B6D4' },
 ]
 
 const BG_OPTIONS = [

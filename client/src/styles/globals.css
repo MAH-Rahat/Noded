@@ -430,3 +430,114 @@ a .glass-card:hover,
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Mobile PWA / Safe Area ───────────────────────────────────────────────── */
+@supports (padding: max(0px)) {
+  .bottom-nav {
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .topbar {
+    padding-top: max(14px, env(safe-area-inset-top));
+  }
+}
+
+/* ─── Mobile viewport fixes ────────────────────────────────────────────────── */
+html {
+  /* Prevent font size inflation on iOS */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Prevent horizontal scroll on mobile */
+body {
+  overflow-x: hidden;
+  /* Use dvh for dynamic viewport height on mobile browsers */
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* ─── Mobile touch targets ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Larger tap targets on mobile */
+  .nav-item {
+    padding: 10px 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* Bottom nav full width on very small screens */
+  .bottom-nav {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    justify-content: space-around;
+    border-radius: var(--radius-xl);
+  }
+
+  /* Page content padding for mobile */
+  main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Cards full width on mobile */
+  .glass-card {
+    border-radius: var(--radius-lg);
+  }
+
+  /* Topbar compact on mobile */
+  .topbar {
+    padding: 10px 14px;
+  }
+
+  /* Input fields larger on mobile for easier typing */
+  .input-field {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    padding: 12px 14px;
+  }
+
+  /* Prevent zoom on select/input on iOS */
+  select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ─── Tablet adjustments ───────────────────────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .bottom-nav {
+    bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── PWA standalone mode ──────────────────────────────────────────────────── */
+@media (display-mode: standalone) {
+  /* Extra top padding for status bar in standalone PWA */
+  .topbar {
+    padding-top: max(14px, env(safe-area-inset-top));
+  }
+
+  /* Extra bottom padding for home indicator */
+  .bottom-nav {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+
+  main {
+    padding-bottom: max(88px, calc(72px + env(safe-area-inset-bottom))) !important;
+  }
+}
+
+/* ─── Scrollable containers on mobile ─────────────────────────────────────── */
+.overflow-x-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.overflow-x-scroll::-webkit-scrollbar { display: none; }
