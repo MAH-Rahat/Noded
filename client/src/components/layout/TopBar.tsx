@@ -59,13 +59,12 @@ export function TopBar({ title }: TopBarProps) {
       </div>
 
       {/* Right */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
           className="theme-toggle"
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          title={`Switch to ${theme === 'dark' ? 'light (Day)' : 'dark (Night)'} mode`}
         >
           <div className="theme-toggle-knob">
             {theme === 'dark' ? '🌙' : '☀️'}
@@ -75,20 +74,6 @@ export function TopBar({ title }: TopBarProps) {
         <button onClick={openSearch} className="icon-btn" aria-label="Search"><SearchIcon /></button>
         <Link to="/settings" className="icon-btn" aria-label="Settings"><SettingsIcon /></Link>
         <button onClick={handleLogout} className="icon-btn" aria-label="Logout"><LogOutIcon /></button>
-
-        <Link to="/settings" style={{ marginLeft: '4px', textDecoration: 'none' }} aria-label="Profile">
-          <div className="scale-hover" style={{
-            width: '30px', height: '30px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-accent), #8B5CF6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.65rem', fontWeight: 700, color: '#fff',
-            border: '1.5px solid var(--color-border-2)',
-            boxShadow: '0 0 10px var(--color-accent-glow)',
-            cursor: 'pointer',
-          }}>
-            {initials}
-          </div>
-        </Link>
       </div>
     </header>
   )
