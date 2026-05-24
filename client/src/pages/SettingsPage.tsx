@@ -56,6 +56,69 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'var(--font-ui)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
 }
 
+const NOTES_PIN_KEY = 'noded_notes_pin'
+
+function NotesPinSection() {
+  const [currentPin, setCurrentPin] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
+  const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
+  const hasPin = !!localStorage.getItem(NOTES_PIN_KEY)
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (hasPin && currentPin !== localStorage.getItem(NOTES_PIN_KEY)) {
+      setMsg({ text: 'Current PIN is wrong', type: 'error' }); return
+    }
+    if (newPin.length < 4) { setMsg({ text: 'PIN must be at least 4 digits', type: 'error' }); return }
+    if (newPin !== confirmPin) { setMsg({ text: 'PINs do not match', type: 'error' }); return }
+    localStorage.setItem(NOTES_PIN_KEY, newPin)
+    setCurrentPin(''); setNewPin(''); setConfirmPin('')
+    setMsg({ text: hasPin ? 'PIN updated' : 'PIN set successfully', type: 'success' })
+    setTimeout(() => setMsg(null), 3000)
+  }
+
+  const pinInputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+    color: 'var(--color-text-primary)', fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
+    outline: 'none', boxSizing: 'border-box', textAlign: 'center', letterSpacing: '0.3em',
+  }
+
+  return (
+    <Section title="Notes PIN">
+      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
+        {hasPin ? 'Change your notes lock PIN. This PIN protects all locked notes.' : 'Set a PIN to lock individual notes. Once set, locked notes will require this PIN to open.'}
+      </p>
+      {msg && <Toast message={msg.text} type={msg.type} />}
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {hasPin && (
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '6px' }}>Current PIN</label>
+            <input type="password" inputMode="numeric" placeholder="••••" value={currentPin} onChange={e => setCurrentPin(e.target.value)} style={pinInputStyle} />
+          </div>
+        )}
+        <div>
+          <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '6px' }}>{hasPin ? 'New PIN' : 'Set PIN'}</label>
+          <input type="password" inputMode="numeric" placeholder="Min 4 digits" value={newPin} onChange={e => setNewPin(e.target.value)} style={pinInputStyle} />
+        </div>
+        <div>
+          <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '6px' }}>Confirm PIN</label>
+          <input type="password" inputMode="numeric" placeholder="Repeat PIN" value={confirmPin} onChange={e => setConfirmPin(e.target.value)} style={pinInputStyle} />
+        </div>
+        <button type="submit" style={{ padding: '10px', borderRadius: '10px', background: 'var(--color-accent)', border: 'none', color: '#fff', fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
+          {hasPin ? 'Update PIN' : 'Set PIN'}
+        </button>
+        {hasPin && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+            Forgot PIN? — <span style={{ color: 'var(--color-text-secondary)' }}>Contact support (coming soon)</span>
+          </div>
+        )}
+      </form>
+    </Section>
+  )
+}
+
 export default function SettingsPage() {
   const { user, setAccentColor, setBackgroundColor } = useAuthStore()
   const { theme, toggleTheme, font, setFont, dashWidgets, toggleWidget } = useUIStore()
@@ -281,6 +344,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </Section>
+
+      {/* Notes PIN */}
+      <NotesPinSection />
 
       {/* Font */}
       <Section title="Font">
