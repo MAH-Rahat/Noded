@@ -156,7 +156,7 @@ export default function DashboardPage() {
           <StatCard label="Net Balance" value={'BDT ' + balance.toLocaleString()} sub="All time" to="/ledger" Icon={TrendingUpIcon} sparkData={balanceSparkData} />
           <StatCard label="Tasks Today" value={completedToday + '/' + totalToday} sub={taskPct + '% complete'} to="/tasks" Icon={CheckSquareIcon} />
           <StatCard label="Notes" value={String(notes.length)} sub="Total saved" to="/canvas" Icon={FileTextIcon} />
-          <StatCard label="Vault" value="Secured" sub="Tap to unlock" to="/vault" Icon={ShieldIcon} />
+          <StatCard label="Savings" value={savingsRate + '%'} sub="This month" to="/ledger" Icon={TrendingUpIcon} />
         </div>
       )}
 
@@ -239,10 +239,10 @@ export default function DashboardPage() {
         <div style={{ marginBottom: '24px' }}>
           <SectionHeader title="This Week" linkTo="/tasks" linkLabel="Full history" />
           <div className="glass-card" style={{ padding: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', overflowX: 'auto', gap: '4px' }}>
               {weekDays.map(({ key, label, done }) => (
-                <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: done ? 'var(--color-accent-dim)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (done ? 'var(--color-accent)' : 'rgba(255,255,255,0.08)'), display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 200ms' }}>
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '10px', background: done ? 'var(--color-accent-dim)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (done ? 'var(--color-accent)' : 'rgba(255,255,255,0.08)'), display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 200ms' }}>
                     {done ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5" /></svg> : <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />}
                   </div>
                   <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>

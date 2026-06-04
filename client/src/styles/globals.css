@@ -505,6 +505,11 @@ a .glass-card:hover,
   .glass-card {
     border-radius: var(--radius-lg);
   }
+
+  /* Flex rows that might overflow: force wrap */
+  .flex-row-mobile {
+    flex-wrap: wrap;
+  }
 }
 
 /* ─── PWA standalone mode ──────────────────────────────────────────────────── */
