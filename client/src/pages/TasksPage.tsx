@@ -669,7 +669,7 @@ export default function TasksPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <RadialProgressRing percent={percent} size={88} strokeWidth={7} label={`${completed}/${total}`} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.03em', lineHeight: 1 }}>{percent}%</div>
+            <div style={{ fontSize: 'clamp(1.3rem, 5.5vw, 2rem)', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.03em', lineHeight: 1 }}>{percent}%</div>
             <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '4px', marginBottom: '12px' }}>
               {completed} of {total} tasks completed today
             </div>
@@ -679,7 +679,7 @@ export default function TasksPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
             <FlameIcon size={20} style={{ color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 800, color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' }}>{streak}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(1rem, 4vw, 1.4rem)', fontWeight: 800, color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' }}>{streak}</span>
             <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>streak</span>
           </div>
         </div>
@@ -924,9 +924,16 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Heatmap */}
-      <div className="glass-card" style={{ padding: '20px', marginTop: '8px' }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>30-Day Completion History</div>
+      {/* Heatmap — compact */}
+      <div className="glass-card" style={{ padding: '12px 14px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>30-Day History</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <FlameIcon size={12} style={{ color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, color: streak > 0 ? '#F59E0B' : 'var(--color-text-muted)' }}>{streak}</span>
+            <span style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)', letterSpacing: '0.06em' }}>STREAK</span>
+          </div>
+        </div>
         <HeatmapCalendar history={history} />
       </div>
     </PageLayout>

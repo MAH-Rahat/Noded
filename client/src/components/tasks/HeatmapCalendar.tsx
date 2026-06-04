@@ -17,22 +17,20 @@ export function HeatmapCalendar({ history, days = 30 }: HeatmapCalendarProps) {
   }
 
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
-        {cells.map(({ date, completed }) => (
-          <div
-            key={date}
-            title={date}
-            style={{
-              aspectRatio: '1',
-              borderRadius: '4px',
-              backgroundColor: completed ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)',
-              boxShadow: completed ? '0 0 6px rgba(59,130,246,0.4)' : 'none',
-              transition: 'background-color 200ms',
-            }}
-          />
-        ))}
-      </div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(15, 1fr)', gap: '3px' }}>
+      {cells.map(({ date, completed }) => (
+        <div
+          key={date}
+          title={date}
+          style={{
+            aspectRatio: '1',
+            borderRadius: '3px',
+            backgroundColor: completed ? 'var(--color-accent)' : 'rgba(255,255,255,0.06)',
+            boxShadow: completed ? '0 0 4px var(--color-accent-glow)' : 'none',
+            transition: 'background-color 200ms',
+          }}
+        />
+      ))}
     </div>
   )
 }
